@@ -5,6 +5,8 @@ import { BooksModule } from './books/books.module';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { GlobalTransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { GlobalTransformInterceptor } from './common/interceptors/transform.inte
       synchronize: true,
     }),
     BooksModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [
