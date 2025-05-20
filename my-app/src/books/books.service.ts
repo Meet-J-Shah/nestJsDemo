@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreateBookDto } from './dto/create-book.dto';
-import { UpdateBookDto } from './dto/update-book.dto';
+import { CreateBookDto } from './dto/createBook.dto';
+import { UpdateBookDto } from './dto/updateBook.dto';
 import { Book } from './models/book.model';
 import { CreationAttributes } from 'sequelize';
 type BookCreationAttrs = CreationAttributes<Book>;
@@ -20,17 +20,14 @@ export class BooksService {
     return bk;
   }
 
-  async findAll(): Promise<Book[]> {
-    return this.bookModel.findAll();
+  async findAll() {
+    const books = await this.bookModel.findAll();
+    return books.map((book) => book.get({ plain: true }));
   }
 
-  findOne(id: number): Promise<Book | null> {
-    const book = this.bookModel.findOne({
-      where: {
-        bookId: id,
-      },
-    });
-    return book;
+  async findOne(id: number) {
+    const book = await this.bookModel.findByPk(id);
+    return book?.get({ plain: true }); // MUST convert Sequelize instance
   }
 
   async update(id: number, updateBookDto: UpdateBookDto) {
@@ -38,7 +35,6 @@ export class BooksService {
     if (!book) {
       return 'Not Found Error';
     }
-    // Update the tax data
 
     await book.update(updateBookDto);
     return book;

@@ -3,6 +3,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BooksModule } from './books/books.module';
 import { SequelizeModule } from '@nestjs/sequelize';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { GlobalTransformInterceptor } from './common/interceptors/transform.interceptor';
 
 @Module({
   imports: [
@@ -19,6 +21,12 @@ import { SequelizeModule } from '@nestjs/sequelize';
     BooksModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: GlobalTransformInterceptor,
+    },
+  ],
 })
 export class AppModule {}
