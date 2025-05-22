@@ -10,7 +10,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
-import { CreateRoleDto } from './dto/create-role.dto';
+import { CreateRoleDto } from './dto/createRole.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('roles')
@@ -20,20 +20,20 @@ export class RolesController {
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Request() req, @Body() createRoleDto: CreateRoleDto) {
-    const user = req.user;
-    console.log(user);
-    return this.rolesService.create(createRoleDto);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const userId = +req.user.userId;
+    return this.rolesService.create(createRoleDto, userId);
   }
-
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.rolesService.findAll();
+  findAll(@Request() req) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const userId = +req.user.userId;
+    return this.rolesService.findAll(userId);
   }
   @UseGuards(JwtAuthGuard)
   @Get('/profileV3')
   getProfile(@Request() req) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    console.log('MJ:', req.user);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     return req.user;
   }

@@ -5,6 +5,7 @@ import {
   DataType,
   ForeignKey,
   BelongsTo,
+  HasMany,
 } from 'sequelize-typescript';
 import { User } from '../../users/models/user.model';
 
@@ -13,8 +14,8 @@ export class Role extends Model<Role> {
   @Column({ type: DataType.STRING, unique: true, allowNull: false })
   name: string;
 
-  @Column({ type: DataType.INTEGER, allowNull: false })
-  level: number;
+  // @Column({ type: DataType.INTEGER, allowNull: false })
+  // level: number;
 
   // Creator of the role
   @ForeignKey(() => User)
@@ -23,4 +24,15 @@ export class Role extends Model<Role> {
 
   @BelongsTo(() => User, 'creatorId')
   creator: User;
+  //  Parent User
+  @ForeignKey(() => Role)
+  @Column
+  parentId: number;
+
+  @BelongsTo(() => Role, 'parentId')
+  parent: Role;
+
+  //  Children
+  @HasMany(() => Role, 'parentId')
+  children: Role[];
 }
