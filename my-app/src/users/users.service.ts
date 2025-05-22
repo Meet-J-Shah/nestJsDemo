@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { User } from './models/user.model';
 
 // This should be a real class/interface representing a user entity
-export type User = any;
+// export type User = any;
 
 @Injectable()
 export class UsersService {
@@ -18,8 +19,8 @@ export class UsersService {
     },
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-  findOne(username: string): User | undefined {
-    return this.users.find((user) => user.username === username);
+  async findOne(username: string) {
+    const user = await User.findOne({ where: { name: username } });
+    return user;
   }
 }
