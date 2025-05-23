@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
 
 export class CreateRoleDto {
