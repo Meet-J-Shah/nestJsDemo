@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from './models/user.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateUserDto } from './dto/createUser.dto';
@@ -19,32 +24,44 @@ export class UsersService {
     private readonly userModel: typeof User,
   ) {}
   async create(createUserDto: CreateUserDto, userId: number) {
-    const user = await User.findByPk(userId);
-    const reqUser = await User.findOne({ where: { id: userId } });
+    const reqUser = await User.findByPk(userId);
+
     if (!reqUser) {
-      return 'You are not exisitng in db';
+      throw new NotFoundException(
+        'Requesting user does not exist in the database',
+      );
     }
-    if (reqUser.dataValues.roleId == createUserDto.roleId) {
-      return "Sorry,you can't create user of your role";
+
+    if (reqUser.dataValues.roleId === createUserDto.roleId) {
+      throw new ForbiddenException(
+        "Sorry, you can't create a user with your own role",
+      );
     }
+
     const userRole = await isAncestor(
       Role,
       reqUser.dataValues.roleId,
       createUserDto.roleId,
     );
+
     if (!userRole) {
-      return "You can't modify It";
+      throw new ForbiddenException(
+        "You can't assign a role outside your hierarchy",
+      );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const createUserData = { parentId: user?.id, ...createUserDto };
+    const createUserData = {
+      parentId: userId,
+      ...createUserDto,
+    };
+
     const newUser = await this.userModel.create(
       createUserData as unknown as CreationAttributes<User>,
     );
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const bk = await this.userModel.findByPk(newUser?.id);
-    return bk;
+    const savedUser = await this.userModel.findByPk(newUser.id);
+    return savedUser;
   }
 
   async findAll(userId: number) {
@@ -60,15 +77,17 @@ export class UsersService {
   async findOneV2(id: number, userId: number) {
     const user = await this.userModel.findByPk(id);
     if (!user) {
-      return 'Not Found Error';
+      throw new NotFoundException(`User with id ${id} not found`);
     }
     const creatorParent = await isAncestor(User, userId, id);
     if (!creatorParent) {
-      return "You can't see It cause it is not your descendent";
+      throw new ForbiddenException('You can only see descendants as parents');
     }
     const reqUser = await User.findByPk(userId);
     if (!reqUser) {
-      return 'You are not exisitng in db';
+      throw new NotFoundException(
+        'Requesting user does not exist in the database',
+      );
     }
     return user;
   }
@@ -76,15 +95,19 @@ export class UsersService {
   async update(id: number, updateUserDto: UpdateUserDto, userId: number) {
     const reqUser = await User.findOne({ where: { id: userId } });
     if (!reqUser) {
-      return 'You are not exisitng in db';
+      throw new NotFoundException(
+        'Requesting user does not exist in the database',
+      );
     }
     const user = await User.findByPk(id);
     if (!user) {
-      return 'User not found';
+      throw new NotFoundException(`User with id ${id} not found`);
     }
     const userParent = await isAncestor(User, userId, id);
     if (!userParent) {
-      return "You can't modify It";
+      throw new ForbiddenException(
+        "You don't have permission to modify this user",
+      );
     }
 
     if (updateUserDto.roleId) {
@@ -94,7 +117,9 @@ export class UsersService {
         updateUserDto.roleId ?? 0,
       );
       if (!userRole) {
-        return "You can't modify It";
+        throw new ForbiddenException(
+          "You can't assign a role outside your hierarchy",
+        );
       }
     }
     if (updateUserDto.parentId) {
@@ -105,7 +130,9 @@ export class UsersService {
         updateUserDto.parentId,
       );
       if (!userParentDecendent) {
-        return "You can't modify It";
+        throw new ForbiddenException(
+          'You can only assign descendants as parents',
+        );
       }
       //check that updated parent is not suceesor of the user
       const userParentAnsector = await isAncestor(
@@ -114,7 +141,9 @@ export class UsersService {
         updateUserDto.parentId,
       );
       if (userParentAnsector) {
-        return "You can't modify It";
+        throw new BadRequestException(
+          'Circular parent assignment is not allowed',
+        );
       }
     }
 
@@ -125,15 +154,19 @@ export class UsersService {
   async remove(id: number, userId: number) {
     const reqUser = await User.findOne({ where: { id: userId } });
     if (!reqUser) {
-      return 'You are not exisitng in db';
+      throw new NotFoundException(
+        'Requesting user does not exist in the database',
+      );
     }
     const user = await User.findByPk(id);
     if (!user) {
-      return 'User not found';
+      throw new NotFoundException(`User with id ${id} not found`);
     }
     const userParent = await isAncestor(User, userId, id);
     if (!userParent) {
-      return "You can't delete It";
+      throw new ForbiddenException(
+        "You don't have permission to delete this user",
+      );
     }
     return `user is  deleted having id:- ${id}`;
   }
