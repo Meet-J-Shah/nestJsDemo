@@ -14,7 +14,6 @@ import databaseConfig from './db/config/config';
 @Module({
   imports: [
     // Load environment variables
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     ConfigModule.forRoot({
       isGlobal: true,
     }),

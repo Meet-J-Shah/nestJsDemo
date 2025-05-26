@@ -9,9 +9,9 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { RolesService } from './roles.service';
-import { CreateRoleDto } from './dto/createRole.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
+import { PermissionService } from './permission.service';
+import { CreateRoleDto } from './dto/createPermission.dto';
+import { UpdateRoleDto } from './dto/updatePermission.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('roles')
 export class RolesController {
@@ -21,7 +21,7 @@ export class RolesController {
   @Post()
   create(@Request() req, @Body() createRoleDto: CreateRoleDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = req.user.userId as number;
+    const userId = +req.user.userId;
     return this.rolesService.create(createRoleDto, userId);
   }
   @UseGuards(JwtAuthGuard)

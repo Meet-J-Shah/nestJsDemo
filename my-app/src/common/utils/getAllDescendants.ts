@@ -26,6 +26,14 @@ export async function getAllDescendants<T extends Model & WithHierarchyKeys>(
   return result;
 }
 
+/**
+ * rtfrfr
+ *
+ * @param model
+ * @param ancestorId --> user or role id
+ * @param descendantId
+ * @returns
+ */
 export async function isAncestor<T extends Model>(
   model: { findByPk: (id: number) => Promise<T | null> },
   ancestorId: number,

@@ -1,7 +1,6 @@
 import { SequelizeOptions } from 'sequelize-typescript';
 import * as dotenv from 'dotenv';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 dotenv.config();
 
 const config: { [key: string]: SequelizeOptions } = {
