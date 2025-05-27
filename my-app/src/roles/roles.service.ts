@@ -125,7 +125,7 @@ export class RolesService {
       return role;
     }
     async function validateRoleHierarchy(
-      userroleId: number,
+      userRoleId: number,
       roleId: number,
       updatedParentroleId: number,
     ): Promise<boolean> {
@@ -138,12 +138,12 @@ export class RolesService {
       console.log('mj4');
       if (updatedIsAncestorOfRole) return false;
 
-      // Check if userroleId is same as updatedParentroleId or ancestor of updatedParentroleId
-      if (userroleId === updatedParentroleId) return true;
+      // Check if userRoleId is same as updatedParentroleId or ancestor of updatedParentroleId
+      if (userRoleId === updatedParentroleId) return true;
 
       const userIsAncestorOfUpdated = await isAncestor(
         Role,
-        userroleId,
+        userRoleId,
         updatedParentroleId,
       );
       return userIsAncestorOfUpdated;

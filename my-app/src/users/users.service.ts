@@ -10,10 +10,13 @@ import { CreateUserDto } from './dto/createUser.dto';
 import { CreationAttributes } from 'sequelize/types/model';
 import {
   getAllDescendants,
+  getAncestryPath,
   isAncestor,
+  isAncestorCTEWithSequelize,
 } from 'src/common/utils/getAllDescendants';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { Role } from 'src/roles/models/role.model';
+import { Sequelize } from 'sequelize-typescript';
 // This should be a real class/interface representing a user entity
 // export type User = any;
 
@@ -22,6 +25,7 @@ export class UsersService {
   constructor(
     @InjectModel(User)
     private readonly userModel: typeof User,
+    private readonly sequelize: Sequelize,
   ) {}
   async create(createUserDto: CreateUserDto, userId: number) {
     const reqUser = await User.findByPk(userId);
@@ -103,7 +107,15 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    const userParent = await isAncestor(User, userId, id);
+    // const userParent = await isAncestor(User, userId, id);
+    const res = await getAncestryPath(this.sequelize, 'users', id);
+    console.log(res);
+    const userParent = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'users',
+      userId,
+      id,
+    );
     if (!userParent) {
       throw new ForbiddenException(
         "You don't have permission to modify this user",
@@ -111,11 +123,17 @@ export class UsersService {
     }
 
     if (updateUserDto.roleId) {
-      const userRole = await isAncestor(
-        Role,
+      const userRole = await isAncestorCTEWithSequelize(
+        this.sequelize,
+        'roles',
         reqUser.dataValues.roleId,
         updateUserDto.roleId ?? 0,
       );
+      // await isAncestor(
+      //   Role,
+      //   reqUser.dataValues.roleId,
+      //   updateUserDto.roleId ?? 0,
+      // );
       if (!userRole) {
         throw new ForbiddenException(
           "You can't assign a role outside your hierarchy",
@@ -124,11 +142,17 @@ export class UsersService {
     }
     if (updateUserDto.parentId) {
       //update user parent is decent of req user
-      const userParentDecendent = await isAncestor(
-        User,
+      const userParentDecendent = await isAncestorCTEWithSequelize(
+        this.sequelize,
+        'users',
         userId,
         updateUserDto.parentId,
       );
+      //  await isAncestor(
+      //   User,
+      //   userId,
+      //   updateUserDto.parentId,
+      // );
       if (!userParentDecendent) {
         throw new ForbiddenException(
           'You can only assign descendants as parents',
