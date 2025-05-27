@@ -3,10 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateRoleDto } from './dto/createRole.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
+import { CreatePermissionDto } from './dto/createPermission.dto';
+import { UpdatePermissionDto } from './dto/updatePermission.dto';
 import { User } from 'src/users/models/user.model';
-import { Role } from './models/role.model';
+import { Role } from './models/permission.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreationAttributes } from 'sequelize';
 import {
@@ -15,7 +15,7 @@ import {
 } from 'src/common/utils/getAllDescendants';
 
 @Injectable()
-export class RolesService {
+export class PermissionService {
   constructor(
     @InjectModel(Role)
     private readonly roleModel: typeof Role,
@@ -23,11 +23,11 @@ export class RolesService {
 
   async create(createRoleDto: CreateRoleDto, userId: number) {
     const user = await User.findByPk(userId);
-    // if (!user) {
-    //   throw new NotFoundException(`User with id ${userId} not found`);
-    // }
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
 
-    const userRoleId = user?.dataValues.roleId;
+    const userRoleId = user.dataValues.roleId;
 
     if (createRoleDto.parentId) {
       const parentRole = await this.roleModel.findByPk(createRoleDto.parentId);
@@ -40,7 +40,7 @@ export class RolesService {
       // Check if user has permission to use this parent role
       const userCanAssignParent = await isAncestor(
         Role,
-        userRoleId ?? 0,
+        userRoleId,
         createRoleDto.parentId,
       );
 
