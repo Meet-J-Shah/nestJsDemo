@@ -70,7 +70,8 @@ export class UsersService {
     }
 
     const newUser = await this.userModel.create({
-      name: createUserDto.name,
+      userName: createUserDto.userName,
+      email: createUserDto.email,
       password: createUserDto.password,
       roleId: createUserDto.roleId,
       parentId: createUserDto.parentId ?? reqUser.userId,
@@ -87,7 +88,7 @@ export class UsersService {
   }
 
   async findOne(username: string) {
-    const user = await User.findOne({ where: { name: username } });
+    const user = await User.findOne({ where: { userName: username } });
     return user;
   }
 

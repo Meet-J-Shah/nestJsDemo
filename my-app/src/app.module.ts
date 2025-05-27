@@ -26,7 +26,12 @@ import databaseConfig from './db/config/config';
       // password: '',
       // database: 'test_nestJs_sequalize',
       autoLoadModels: true,
-      synchronize: true,
+      synchronize: false, // Not used by Sequelize (just omit it)
+      sync: {
+        alter: false, //  Don't auto-alter tables
+        force: false, //  Don't drop and recreate tables
+      },
+      logging: true,
     }),
     BooksModule,
     AuthModule,

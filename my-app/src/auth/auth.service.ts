@@ -22,7 +22,7 @@ export class AuthService {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async login(user: User) {
-    const payload = { username: user.dataValues.name, sub: user.id };
+    const payload = { username: user.dataValues.userName, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload, {
         expiresIn: '1h',

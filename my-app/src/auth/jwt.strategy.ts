@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       userId: reqUser.dataValues.id,
       roleId: reqUser.dataValues.roleId,
-      username: reqUser.dataValues.name,
+      username: reqUser.dataValues.userName,
     };
     return user;
   }
