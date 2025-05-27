@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Body,
   Controller,
@@ -12,6 +13,7 @@ import { Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { UserIdParamDto } from './dto/userIdParam.dto';
 @Controller('user')
 export class UserController {
   constructor(private readonly UsersService: UsersService) {}
@@ -21,42 +23,43 @@ export class UserController {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     return req.user;
   }
+
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Request() req, @Body() createUserDto: CreateUserDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = +req.user.userId;
-    return this.UsersService.create(createUserDto, userId);
+    return this.UsersService.create(createUserDto, req.user);
   }
+
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Request() req) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = +req.user.userId;
-    return this.UsersService.findAll(userId);
+    return this.UsersService.findAll(req.user);
   }
+
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findOne(@Request() req, @Param('id') id: string) {
+  findOne(@Request() req, @Param() params: UserIdParamDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.UsersService.findOneV2(+id, +req.user?.userId);
+    return this.UsersService.findOneV2(params.id, req.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
     @Request() req,
-    @Param('id') id: string,
+    @Param() params: UserIdParamDto,
     @Body() updateUserDto: UpdateUserDto,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.UsersService.update(+id, updateUserDto, +req.user?.userId);
+    return this.UsersService.update(params.id, updateUserDto, req.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Request() req, @Param('id') id: string) {
+  remove(@Request() req, @Param() params: UserIdParamDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.UsersService.remove(+id, +req.user?.userId);
+    return this.UsersService.remove(params.id, req.user);
   }
 }

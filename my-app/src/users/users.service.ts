@@ -11,12 +11,11 @@ import { CreationAttributes } from 'sequelize/types/model';
 import {
   getAllDescendants,
   getAncestryPath,
-  isAncestor,
   isAncestorCTEWithSequelize,
 } from 'src/common/utils/getAllDescendants';
 import { UpdateUserDto } from './dto/updateUser.dto';
-import { Role } from 'src/roles/models/role.model';
 import { Sequelize } from 'sequelize-typescript';
+import { reqUser } from 'src/common/interfaces/reqUser.interface';
 // This should be a real class/interface representing a user entity
 // export type User = any;
 
@@ -27,49 +26,63 @@ export class UsersService {
     private readonly userModel: typeof User,
     private readonly sequelize: Sequelize,
   ) {}
-  async create(createUserDto: CreateUserDto, userId: number) {
-    const reqUser = await User.findByPk(userId);
-
-    if (!reqUser) {
-      throw new NotFoundException(
-        'Requesting user does not exist in the database',
-      );
-    }
-
-    if (reqUser.dataValues.roleId === createUserDto.roleId) {
+  async create(createUserDto: CreateUserDto, reqUser: reqUser) {
+    if (reqUser.roleId === createUserDto.roleId) {
       throw new ForbiddenException(
         "Sorry, you can't create a user with your own role",
       );
     }
 
-    const userRole = await isAncestor(
-      Role,
-      reqUser.dataValues.roleId,
+    const userRole = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'roles',
+      reqUser.roleId,
       createUserDto.roleId,
     );
 
-    if (!userRole) {
+    if (!userRole && reqUser.roleId == createUserDto.roleId) {
       throw new ForbiddenException(
         "You can't assign a role outside your hierarchy",
       );
     }
 
-    const createUserData = {
-      parentId: userId,
-      ...createUserDto,
-    };
+    if (createUserDto.parentId) {
+      const parentRole = await this.userModel.findByPk(createUserDto.parentId);
+      if (!parentRole) {
+        throw new NotFoundException(
+          `Parent User with id ${createUserDto.parentId} not found`,
+        );
+      }
 
-    const newUser = await this.userModel.create(
-      createUserData as unknown as CreationAttributes<User>,
-    );
+      // Check if user has permission to use this parent user
+      const userCanAssignParent = await isAncestorCTEWithSequelize(
+        this.sequelize,
+        'users',
+        reqUser.userId,
+        createUserDto.parentId,
+      );
+
+      if (!userCanAssignParent) {
+        throw new ForbiddenException(
+          "You don't have permission to use this parent as user",
+        );
+      }
+    }
+
+    const newUser = await this.userModel.create({
+      name: createUserDto.name,
+      password: createUserDto.password,
+      roleId: createUserDto.roleId,
+      parentId: createUserDto.parentId ?? reqUser.userId,
+    } as CreationAttributes<User>);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const savedUser = await this.userModel.findByPk(newUser.id);
     return savedUser;
   }
 
-  async findAll(userId: number) {
-    const allChildren = await getAllDescendants(User, userId);
+  async findAll(reqUser: reqUser) {
+    const allChildren = await getAllDescendants(User, reqUser.userId);
     return allChildren;
   }
 
@@ -78,45 +91,44 @@ export class UsersService {
     return user;
   }
 
-  async findOneV2(id: number, userId: number) {
+  async findOneV2(id: number, reqUser: reqUser) {
     const user = await this.userModel.findByPk(id);
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    const creatorParent = await isAncestor(User, userId, id);
+    const creatorParent = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'users',
+      reqUser.userId,
+      id,
+    );
     if (!creatorParent) {
       throw new ForbiddenException('You can only see descendants as parents');
-    }
-    const reqUser = await User.findByPk(userId);
-    if (!reqUser) {
-      throw new NotFoundException(
-        'Requesting user does not exist in the database',
-      );
     }
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto, userId: number) {
-    const reqUser = await User.findOne({ where: { id: userId } });
-    if (!reqUser) {
-      throw new NotFoundException(
-        'Requesting user does not exist in the database',
-      );
-    }
+  async update(id: number, updateUserDto: UpdateUserDto, reqUser: reqUser) {
     const user = await User.findByPk(id);
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
+
     // const userParent = await isAncestor(User, userId, id);
-    const res = await getAncestryPath(this.sequelize, 'users', id);
-    console.log(res);
-    const userParent = await isAncestorCTEWithSequelize(
-      this.sequelize,
-      'users',
-      userId,
-      id,
-    );
-    if (!userParent) {
+    const hierarchy = await getAncestryPath(this.sequelize, 'users', id);
+    const idIndex = hierarchy.indexOf(id);
+    const parentIndex = hierarchy.indexOf(user.parentId);
+    const requestUserIdIndex = hierarchy.indexOf(reqUser.userId);
+    const userParent = requestUserIdIndex < idIndex;
+    const userParent2 = requestUserIdIndex < parentIndex;
+
+    // const userParent = await isAncestorCTEWithSequelize(
+    //   this.sequelize,
+    //   'users',
+    //   userId,
+    //   id,
+    // );
+    if (!userParent || !userParent2) {
       throw new ForbiddenException(
         "You don't have permission to modify this user",
       );
@@ -126,8 +138,8 @@ export class UsersService {
       const userRole = await isAncestorCTEWithSequelize(
         this.sequelize,
         'roles',
-        reqUser.dataValues.roleId,
-        updateUserDto.roleId ?? 0,
+        reqUser.roleId,
+        updateUserDto.roleId,
       );
       // await isAncestor(
       //   Role,
@@ -141,13 +153,15 @@ export class UsersService {
       }
     }
     if (updateUserDto.parentId) {
+      const updateParentIndex = hierarchy.indexOf(updateUserDto.parentId);
       //update user parent is decent of req user
-      const userParentDecendent = await isAncestorCTEWithSequelize(
-        this.sequelize,
-        'users',
-        userId,
-        updateUserDto.parentId,
-      );
+      const userParentDecendent = requestUserIdIndex < updateParentIndex;
+      // await isAncestorCTEWithSequelize(
+      //   this.sequelize,
+      //   'users',
+      //   userId,
+      //   updateUserDto.parentId,
+      // );
       //  await isAncestor(
       //   User,
       //   userId,
@@ -159,11 +173,12 @@ export class UsersService {
         );
       }
       //check that updated parent is not suceesor of the user
-      const userParentAnsector = await isAncestor(
-        User,
-        id,
-        updateUserDto.parentId,
-      );
+      const userParentAnsector = idIndex < updateParentIndex;
+      // await isAncestor(
+      //   User,
+      //   id,
+      //   updateUserDto.parentId,
+      // );
       if (userParentAnsector) {
         throw new BadRequestException(
           'Circular parent assignment is not allowed',
@@ -175,18 +190,17 @@ export class UsersService {
     return user;
   }
 
-  async remove(id: number, userId: number) {
-    const reqUser = await User.findOne({ where: { id: userId } });
-    if (!reqUser) {
-      throw new NotFoundException(
-        'Requesting user does not exist in the database',
-      );
-    }
+  async remove(id: number, reqUser: reqUser) {
     const user = await User.findByPk(id);
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    const userParent = await isAncestor(User, userId, id);
+    const userParent = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'users',
+      reqUser.userId,
+      id,
+    );
     if (!userParent) {
       throw new ForbiddenException(
         "You don't have permission to delete this user",

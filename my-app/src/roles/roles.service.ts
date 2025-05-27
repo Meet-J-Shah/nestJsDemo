@@ -13,6 +13,7 @@ import {
   getAllDescendants,
   isAncestor,
 } from 'src/common/utils/getAllDescendants';
+import { reqUser } from 'src/common/interfaces/reqUser.interface';
 
 @Injectable()
 export class RolesService {
@@ -21,13 +22,8 @@ export class RolesService {
     private readonly roleModel: typeof Role,
   ) {}
 
-  async create(createRoleDto: CreateRoleDto, userId: number) {
-    const user = await User.findByPk(userId);
-    // if (!user) {
-    //   throw new NotFoundException(`User with id ${userId} not found`);
-    // }
-
-    const userRoleId = user?.dataValues.roleId;
+  async create(createRoleDto: CreateRoleDto, reqUser: reqUser) {
+    const userRoleId = reqUser.roleId;
 
     if (createRoleDto.parentId) {
       const parentRole = await this.roleModel.findByPk(createRoleDto.parentId);
@@ -40,7 +36,7 @@ export class RolesService {
       // Check if user has permission to use this parent role
       const userCanAssignParent = await isAncestor(
         Role,
-        userRoleId ?? 0,
+        userRoleId,
         createRoleDto.parentId,
       );
 
@@ -53,30 +49,26 @@ export class RolesService {
 
     const newRole = await this.roleModel.create({
       name: createRoleDto.name,
-      creatorId: userId,
+      creatorId: reqUser.userId,
       parentId: createRoleDto.parentId ?? userRoleId, // Default to user role if none provided
     } as CreationAttributes<Role>);
 
     return this.roleModel.findByPk(+newRole.dataValues.id);
   }
 
-  async findAll(userId: number) {
-    const user = await User.findByPk(userId);
-    // const userRole = await Role.findByPk(user?.dataValues.roleId);
-    const roleId = user?.dataValues.roleId ?? Infinity;
-
-    const allChildren = await getAllDescendants(Role, roleId);
+  async findAll(reqUser: reqUser) {
+    const allChildren = await getAllDescendants(Role, reqUser.roleId);
     return allChildren;
   }
 
-  async findOne(id: number, userId: number) {
+  async findOne(id: number, reqUser: reqUser) {
     const role = await this.roleModel.findByPk(id);
     if (!role) {
       throw new NotFoundException(`Role with id ${id} not found`);
     }
     const creatorParent = await isAncestor(
       User,
-      userId,
+      reqUser.userId,
       role.dataValues.creatorId,
     );
     if (!creatorParent) {
@@ -84,35 +76,23 @@ export class RolesService {
         `You don't have permission to view this role`,
       );
     }
-    const reqUser = await User.findByPk(userId);
-    if (!reqUser) {
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
-    const reqUserAncestor = await isAncestor(
-      Role,
-      reqUser.dataValues.roleId,
-      id,
-    );
+
+    const reqUserAncestor = await isAncestor(Role, reqUser.roleId, id);
     if (!reqUserAncestor) {
       throw new ForbiddenException(`You don't have access to view this role`);
     }
     return role;
   }
 
-  async update(id: number, updateRoleDto: UpdateRoleDto, userId: number) {
+  async update(id: number, updateRoleDto: UpdateRoleDto, reqUser: reqUser) {
     const role = await this.roleModel.findByPk(id, { paranoid: false });
     if (!role) {
       throw new NotFoundException(`Role with id ${id} not found`);
     }
-    const asscoiateUser = await User.findOne({ where: { id: userId } });
-    if (!asscoiateUser) {
-      throw new NotFoundException(
-        `Requesting user with id ${userId} not found`,
-      );
-    }
+
     const creatorParent = await isAncestor(
       User,
-      userId,
+      reqUser.userId,
       role.dataValues.creatorId,
     );
     if (!creatorParent) {
@@ -135,7 +115,6 @@ export class RolesService {
         roleId,
         updatedParentroleId,
       );
-      console.log('mj4');
       if (updatedIsAncestorOfRole) return false;
 
       // Check if userRoleId is same as updatedParentroleId or ancestor of updatedParentroleId
@@ -149,7 +128,7 @@ export class RolesService {
       return userIsAncestorOfUpdated;
     }
     const valid = await validateRoleHierarchy(
-      asscoiateUser.dataValues.roleId,
+      reqUser.roleId,
       id,
       updateRoleDto.parentId ?? Infinity,
     );
@@ -165,14 +144,14 @@ export class RolesService {
     }
   }
 
-  async remove(id: number, userId: number) {
+  async remove(id: number, reqUser: reqUser) {
     const role = await this.roleModel.findByPk(id);
     if (!role) {
       throw new NotFoundException(`Role with id ${id} not found`);
     }
     const creatorParent = await isAncestor(
       User,
-      userId,
+      reqUser.userId,
       role.dataValues.creatorId,
     );
     if (!creatorParent) {
@@ -180,15 +159,7 @@ export class RolesService {
         "You can't delete this role — not in your user hierarchy",
       );
     }
-    const reqUser = await User.findByPk(userId);
-    if (!reqUser) {
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
-    const reqUserAncestor = await isAncestor(
-      Role,
-      reqUser.dataValues.roleId,
-      id,
-    );
+    const reqUserAncestor = await isAncestor(Role, reqUser.roleId, id);
     if (!reqUserAncestor) {
       throw new ForbiddenException(
         "Sorry, You don't have acess to delete this role",

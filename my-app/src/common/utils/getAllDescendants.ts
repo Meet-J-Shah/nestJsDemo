@@ -134,5 +134,9 @@ export async function getAncestryPath(
   //   path: string;
   //   depth: number;
   // }[];
-  return (result[result.length - 1] as { path: string })?.path || '';
+  const input = (result[result.length - 1] as { path: string })?.path || '';
+  const numberArray = input.split('/').map(Number);
+
+  console.log(numberArray);
+  return numberArray;
 }
