@@ -1,206 +1,150 @@
-// import {
-//   ForbiddenException,
-//   Injectable,
-//   NotFoundException,
-// } from '@nestjs/common';
-// import { CreatePermissionDto } from './dto/createPermission.dto';
-// import { UpdatePermissionDto } from './dto/updatePermission.dto';
-// import { User } from 'src/users/models/user.model';
-// import { Role } from './models/permission.model';
-// import { InjectModel } from '@nestjs/sequelize';
-// import { CreationAttributes } from 'sequelize';
-// import {
-//   getAllDescendants,
-//   isAncestor,
-// } from 'src/common/utils/getAllDescendants';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Permission } from './models/permission.model';
+import { Role } from 'src/roles/models/role.model';
+import { InjectModel } from '@nestjs/sequelize';
+import { CreationAttributes } from 'sequelize';
+import { RolePermission } from './models/rolePermission.model';
+import { CreateRolePermissionDto } from './dto/createRolePermission.dto';
 
-// @Injectable()
-// export class PermissionService {
-//   constructor(
-//     @InjectModel(Role)
-//     private readonly roleModel: typeof Role,
-//   ) {}
+@Injectable()
+export class PermissionService {
+  constructor(
+    @InjectModel(Permission)
+    private readonly permissionModel: typeof Permission,
+  ) {}
 
-//   async create(createRoleDto: CreateRoleDto, userId: number) {
-//     const user = await User.findByPk(userId);
-//     if (!user) {
-//       throw new NotFoundException(`User with id ${userId} not found`);
-//     }
+  async create(createRolePermission: CreateRolePermissionDto, roleId: number) {
+    if (roleId !== 1) {
+      throw new BadRequestException('Permission Only See By Super Admin');
+    }
+    const role = await Role.findByPk(createRolePermission.roleId);
+    const permission = await Permission.findByPk(
+      createRolePermission.permissionId,
+    );
+    if (!role || !permission) {
+      throw new BadRequestException(
+        'Seleted  Role Or Permission does not Exist',
+      );
+    }
+    const rolePermission = await RolePermission.create({
+      roleId: createRolePermission.roleId,
+      permissionId: createRolePermission.permissionId,
+    } as CreationAttributes<RolePermission>);
+    return rolePermission;
+  }
 
-//     const userRoleId = user.dataValues.roleId;
+  async findAll(roleId: number) {
+    if (roleId !== 1) {
+      throw new BadRequestException('Permission Only See By Super Admin');
+    }
+    const permissions = await Permission.findAll();
+    return permissions;
+  }
+  async findAllConnected(roleId: number) {
+    if (roleId !== 1) {
+      throw new BadRequestException('Permission Only See By Super Admin');
+    }
+    const permissions = await RolePermission.findAll();
+    return permissions;
+  }
 
-//     if (createRoleDto.parentId) {
-//       const parentRole = await this.roleModel.findByPk(createRoleDto.parentId);
-//       if (!parentRole) {
-//         throw new NotFoundException(
-//           `Parent role with id ${createRoleDto.parentId} not found`,
-//         );
-//       }
+  async findOneByRole(id: number, roleId: number) {
+    if (roleId !== 1) {
+      throw new BadRequestException('Permission Only See By Super Admin');
+    }
+    const role = await Role.findOne({
+      where: { id: id },
+      include: {
+        model: Permission,
+        as: 'permissions',
+        through: { attributes: [] },
+      },
+    });
+    return role;
+  }
+  async findOneByPermission(id: number, roleId: number) {
+    if (roleId !== 1) {
+      throw new BadRequestException('Permission Only See By Super Admin');
+    }
+    const permission = await Permission.findOne({
+      where: { id: id },
+      include: {
+        model: Role,
+        as: 'roles',
+        through: { attributes: [] },
+      },
+    });
+    return permission;
+  }
+  async findOneById(
+    roleId: number,
+    permissionId: number,
+    reqUserRoleId: number,
+  ) {
+    if (reqUserRoleId !== 1) {
+      throw new BadRequestException('Permission Only See By Super Admin');
+    }
+    const permission = await RolePermission.findOne({
+      where: { roleId: roleId, permissionId: permissionId },
+    });
+    if (!permission) {
+      throw new NotFoundException('Requested this does not exist ');
+    }
+    return permission;
+  }
 
-//       // Check if user has permission to use this parent role
-//       const userCanAssignParent = await isAncestor(
-//         Role,
-//         userRoleId,
-//         createRoleDto.parentId,
-//       );
+  // async update(
+  //   roleId: number,
+  //   permissionId: number,
+  //   updateRolePermission: CreateRolePermissionDto,
+  //   reqUserRoleId: number,
+  // ) {
+  //   if (reqUserRoleId !== 1) {
+  //     throw new BadRequestException('Permission Only See By Super Admin');
+  //   }
+  //   const role = await Role.findByPk(updateRolePermission.roleId);
+  //   const permission = await Permission.findByPk(
+  //     updateRolePermission.permissionId,
+  //   );
+  //   const rolePermission = await RolePermission.findOne({
+  //     where: {
+  //       roleId: roleId,
+  //       permissionId: permissionId,
+  //     },
+  //   });
+  //   if (!role || !permission || !rolePermission) {
+  //     throw new BadRequestException(
+  //       'Seleted  Role Or Permission Or given associate Id  does not Exist',
+  //     );
+  //   }
+  //   console.log(updateRolePermission.roleId, updateRolePermission.permissionId);
+  //   // const mj = await rolePermission.update({
+  //   //   roleId: 2,
+  //   //   permissionId: 7,
+  //   // });
+  //   // console.log('meer');
+  //   const mj = await rolePermission.update(updateRolePermission);
+  //   console.log(mj);
+  //   return rolePermission;
+  // }
 
-//       if (!userCanAssignParent && userRoleId !== createRoleDto.parentId) {
-//         throw new ForbiddenException(
-//           "You don't have permission to use this parent role",
-//         );
-//       }
-//     }
+  async remove(roleId: number, permissionId: number, reqUserRoleId: number) {
+    if (reqUserRoleId !== 1) {
+      throw new BadRequestException('Permission Only See By Super Admin');
+    }
+    const permission = await RolePermission.findOne({
+      where: { roleId: roleId, permissionId: permissionId },
+    });
+    if (!permission) {
+      throw new NotFoundException('Requested this does not exist ');
+    }
 
-//     const newRole = await this.roleModel.create({
-//       name: createRoleDto.name,
-//       creatorId: userId,
-//       parentId: createRoleDto.parentId ?? userRoleId, // Default to user role if none provided
-//     } as CreationAttributes<Role>);
-
-//     return this.roleModel.findByPk(+newRole.dataValues.id);
-//   }
-
-//   async findAll(userId: number) {
-//     const user = await User.findByPk(userId);
-//     // const userRole = await Role.findByPk(user?.dataValues.roleId);
-//     const roleId = user?.dataValues.roleId ?? Infinity;
-
-//     const allChildren = await getAllDescendants(Role, roleId);
-//     return allChildren;
-//   }
-
-//   async findOne(id: number, userId: number) {
-//     const role = await this.roleModel.findByPk(id);
-//     if (!role) {
-//       throw new NotFoundException(`Role with id ${id} not found`);
-//     }
-//     const creatorParent = await isAncestor(
-//       User,
-//       userId,
-//       role.dataValues.creatorId,
-//     );
-//     if (!creatorParent) {
-//       throw new ForbiddenException(
-//         `You don't have permission to view this role`,
-//       );
-//     }
-//     const reqUser = await User.findByPk(userId);
-//     if (!reqUser) {
-//       throw new NotFoundException(`User with id ${userId} not found`);
-//     }
-//     const reqUserAncestor = await isAncestor(
-//       Role,
-//       reqUser.dataValues.roleId,
-//       id,
-//     );
-//     if (!reqUserAncestor) {
-//       throw new ForbiddenException(`You don't have access to view this role`);
-//     }
-//     return role;
-//   }
-
-//   async update(id: number, updateRoleDto: UpdateRoleDto, userId: number) {
-//     const role = await this.roleModel.findByPk(id, { paranoid: false });
-//     if (!role) {
-//       throw new NotFoundException(`Role with id ${id} not found`);
-//     }
-//     const asscoiateUser = await User.findOne({ where: { id: userId } });
-//     if (!asscoiateUser) {
-//       throw new NotFoundException(
-//         `Requesting user with id ${userId} not found`,
-//       );
-//     }
-//     const creatorParent = await isAncestor(
-//       User,
-//       userId,
-//       role.dataValues.creatorId,
-//     );
-//     if (!creatorParent) {
-//       throw new ForbiddenException(
-//         `You don't have permission to modify this role`,
-//       );
-//     }
-//     if (!updateRoleDto.parentId) {
-//       await role.update(updateRoleDto);
-//       return role;
-//     }
-//     async function validateRoleHierarchy(
-//       userRoleId: number,
-//       roleId: number,
-//       updatedParentroleId: number,
-//     ): Promise<boolean> {
-//       // Check if updatedParentroleId is ancestor of roleId
-//       const updatedIsAncestorOfRole = await isAncestor(
-//         Role,
-//         roleId,
-//         updatedParentroleId,
-//       );
-//       console.log('mj4');
-//       if (updatedIsAncestorOfRole) return false;
-
-//       // Check if userRoleId is same as updatedParentroleId or ancestor of updatedParentroleId
-//       if (userRoleId === updatedParentroleId) return true;
-
-//       const userIsAncestorOfUpdated = await isAncestor(
-//         Role,
-//         userRoleId,
-//         updatedParentroleId,
-//       );
-//       return userIsAncestorOfUpdated;
-//     }
-//     const valid = await validateRoleHierarchy(
-//       asscoiateUser.dataValues.roleId,
-//       id,
-//       updateRoleDto.parentId ?? Infinity,
-//     );
-//     if (valid) {
-//       console.log('Hierarchy conditions satisfied.');
-//       await role.update(updateRoleDto);
-//       return role;
-//     } else {
-//       console.log('Hierarchy conditions failed.');
-//       throw new ForbiddenException(
-//         'Hierarchy validation failed. Operation not permitted.',
-//       );
-//     }
-//   }
-
-//   async remove(id: number, userId: number) {
-//     const role = await this.roleModel.findByPk(id);
-//     if (!role) {
-//       throw new NotFoundException(`Role with id ${id} not found`);
-//     }
-//     const creatorParent = await isAncestor(
-//       User,
-//       userId,
-//       role.dataValues.creatorId,
-//     );
-//     if (!creatorParent) {
-//       throw new ForbiddenException(
-//         "You can't delete this role — not in your user hierarchy",
-//       );
-//     }
-//     const reqUser = await User.findByPk(userId);
-//     if (!reqUser) {
-//       throw new NotFoundException(`User with id ${userId} not found`);
-//     }
-//     const reqUserAncestor = await isAncestor(
-//       Role,
-//       reqUser.dataValues.roleId,
-//       id,
-//     );
-//     if (!reqUserAncestor) {
-//       throw new ForbiddenException(
-//         "Sorry, You don't have acess to delete this role",
-//       );
-//     }
-//     const users = await User.findOne({ where: { roleId: id } });
-//     if (users) {
-//       throw new ForbiddenException(
-//         "Users asscoaite with this role you can't delete it",
-//       );
-//     }
-//     await role.destroy();
-//     return `role deleted having id:- ${id}`;
-//   }
-// }
+    await permission.destroy();
+    return `Permission of havind Id ${permission.permissionId} to assigned 
+        to role Having Id ${permission.roleId}is removed`;
+  }
+}

@@ -20,6 +20,7 @@ export class User extends Model<User> {
     unique: true,
   })
   email: string;
+
   @Column({ type: DataType.STRING })
   password: string;
 

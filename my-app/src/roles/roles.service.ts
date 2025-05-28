@@ -11,7 +11,7 @@ import { Role } from './models/role.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreationAttributes, Op } from 'sequelize';
 import {
-  getAllDescendants,
+  // getAllDescendants,
   getAncestryPath,
   isAncestorCTEWithSequelize,
 } from 'src/common/utils/getAllDescendants';
@@ -67,7 +67,28 @@ export class RolesService {
   }
 
   async findAll(reqUser: reqUser) {
-    const allChildren = await getAllDescendants(Role, reqUser.roleId);
+    async function getUserWithAllChildren(userId: number): Promise<any> {
+      const role = await Role.findOne({
+        where: { id: userId },
+        include: [{ model: Role, as: 'children' }],
+      });
+
+      if (!role) return null;
+
+      // Recursively fetch children
+      if (role.children && role.children.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        role.children = await Promise.all(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+          role.children.map((child: any) => getUserWithAllChildren(child.id)),
+        );
+      }
+
+      return role;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const allChildren = await getUserWithAllChildren(reqUser.roleId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return allChildren;
   }
 
