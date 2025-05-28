@@ -29,6 +29,7 @@ export class UserController {
     return req.user;
   }
 
+  @Permissions('create_user')
   @Post()
   create(
     @Req() req: Request & { user: any },
@@ -36,12 +37,14 @@ export class UserController {
   ): Promise<any> {
     return this.usersService.create(createUserDto, req.user);
   }
+
   @Permissions('read_user')
   @Get()
   findAll(@Req() req: Request & { user: any }): Promise<any> {
     return this.usersService.findAll(req.user);
   }
 
+  @Permissions('read_user')
   @Get(':id')
   findOne(
     @Req() req: Request & { user: any },
@@ -50,6 +53,7 @@ export class UserController {
     return this.usersService.findOneV2(id, req.user);
   }
 
+  @Permissions('update_user')
   @Patch(':id')
   update(
     @Req() req: Request & { user: any },
@@ -59,6 +63,7 @@ export class UserController {
     return this.usersService.update(id, updateUserDto, req.user);
   }
 
+  @Permissions('delete_user')
   @Delete(':id')
   remove(
     @Req() req: Request & { user: any },
