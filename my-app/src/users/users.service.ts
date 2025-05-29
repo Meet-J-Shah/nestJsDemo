@@ -16,6 +16,9 @@ import {
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { Sequelize } from 'sequelize-typescript';
 import { reqUser } from 'src/common/interfaces/reqUser.interface';
+import { Op } from 'sequelize';
+import { Role } from 'src/roles/models/role.model';
+import { Permission } from 'src/permissions/models/permission.model';
 // This should be a real class/interface representing a user entity
 // export type User = any;
 
@@ -27,6 +30,21 @@ export class UsersService {
     private readonly sequelize: Sequelize,
   ) {}
   async create(createUserDto: CreateUserDto, reqUser: reqUser) {
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [
+          { userName: createUserDto.userName },
+          { userName: createUserDto.email },
+          { email: createUserDto.userName },
+          { email: createUserDto.email },
+        ],
+      },
+    });
+    if (existingUser) {
+      throw new BadRequestException(
+        'Sorry, User Already Exist with this username or Email',
+      );
+    }
     if (reqUser.roleId === createUserDto.roleId) {
       throw new ForbiddenException(
         "Sorry, you can't create a user with your own role",
@@ -84,6 +102,31 @@ export class UsersService {
 
   async findAll(reqUser: reqUser) {
     const allChildren = await getAllDescendants(User, reqUser.userId);
+    return allChildren;
+  }
+  async findAllV2(reqUser: reqUser) {
+    async function getUserWithAllChildren(userId: number): Promise<any> {
+      const user = await User.findOne({
+        where: { id: userId },
+        include: [{ model: User, as: 'children' }],
+      });
+
+      if (!user) return null;
+
+      // Recursively fetch children
+      if (user.children && user.children.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user.children = await Promise.all(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+          user.children.map((child: any) => getUserWithAllChildren(child.id)),
+        );
+      }
+
+      return user;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const allChildren = await getUserWithAllChildren(reqUser.userId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return allChildren;
   }
 
@@ -208,5 +251,27 @@ export class UsersService {
       );
     }
     return `user is  deleted having id:- ${id}`;
+  }
+
+  async getUserPermissions(roleId: number): Promise<string[]> {
+    const role = await Role.findOne({
+      where: { id: roleId },
+      include: {
+        model: Permission,
+        as: 'permissions',
+        through: { attributes: [] },
+      },
+    });
+
+    if (!role || !role.dataValues.permissions) {
+      return [];
+    }
+    const perms: string[] = [];
+
+    role.dataValues.permissions.forEach((element) => {
+      perms.push(element.dataValues.name);
+    });
+
+    return perms;
   }
 }
