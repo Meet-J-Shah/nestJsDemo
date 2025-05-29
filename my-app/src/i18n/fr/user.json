@@ -1,0 +1,7 @@
+{
+  "created": "Utilisateur créé avec succès",
+  "fetched": "Utilisateur avec l'ID {id} récupéré avec succès",
+  "allFetched": "Utilisateurs récupérés avec succès",
+  "updated": "Utilisateur avec l'ID {id} mis à jour avec succès",
+  "deleted": "Utilisateur avec l'ID {id} supprimé avec succès"
+}

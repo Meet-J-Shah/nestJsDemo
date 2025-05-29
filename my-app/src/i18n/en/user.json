@@ -1,0 +1,7 @@
+{
+  "created": "User created successfully",
+  "fetched": "User with ID {id} fetched successfully",
+  "allFetched": "Users fetched successfully",
+  "updated": "User with ID {id} updated successfully",
+  "deleted": "User with ID {id} deleted successfully"
+}
