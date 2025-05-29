@@ -1,46 +1,50 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { BooksModule } from './books/books.module';
+
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+
 import { GlobalTransformInterceptor } from './common/interceptors/transform.interceptor';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { RolesModule } from './roles/roles.module';
 import databaseConfig from './db/config/config';
-import { PermissionModule } from './permissions/permission.module';
+
+// i18n support
+import { I18nModule, AcceptLanguageResolver } from 'nestjs-i18n';
+import * as path from 'path';
+
+// Import versioned API module
+import { V1Module } from './v1/v1.module';
 
 @Module({
   imports: [
-    // Load environment variables
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
+
     SequelizeModule.forRoot({
       ...databaseConfig[process.env.NODE_ENV || 'development'],
-      // dialect: 'mysql',
-      // host: '127.0.0.1',
-      // port: 3306,
-      // username: 'root',
-      // password: '',
-      // database: 'test_nestJs_sequalize',
       autoLoadModels: true,
-      synchronize: false, // Not used by Sequelize (just omit it)
       sync: {
-        alter: false, //  Don't auto-alter tables
-        force: false, //  Don't drop and recreate tables
+        alter: false,
+        force: false,
       },
       logging: true,
     }),
-    BooksModule,
-    AuthModule,
-    UsersModule,
-    RolesModule,
-    PermissionModule,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        // path: path.join(__dirname, '..', 'src', 'i18n'),
+        watch: true,
+      },
+      resolvers: [AcceptLanguageResolver],
+    }),
+
+    V1Module, //  All versioned features come from here
   ],
+
   controllers: [AppController],
+
   providers: [
     AppService,
     {

@@ -12,10 +12,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { PermissionService } from './permission.service';
 import { CreateRolePermissionDto } from './dto/createRolePermission.dto';
-import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permissions } from '../../common/decorators/permissions.decorator';
 import type { Request } from 'express';
 
 @Controller('permissions')

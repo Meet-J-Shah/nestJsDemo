@@ -11,12 +11,12 @@ import {
   Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { UserIdParamDto } from './dto/userIdParam.dto';
-import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permissions } from '../../common/decorators/permissions.decorator';
 import type { Request } from 'express';
 
 @Controller('user')

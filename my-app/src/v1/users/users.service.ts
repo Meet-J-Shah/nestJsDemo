@@ -17,8 +17,8 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { Sequelize } from 'sequelize-typescript';
 import { reqUser } from 'src/common/interfaces/reqUser.interface';
 import { Op } from 'sequelize';
-import { Role } from 'src/roles/models/role.model';
-import { Permission } from 'src/permissions/models/permission.model';
+import { Role } from 'src/v1/roles/models/role.model';
+import { Permission } from 'src/v1/permissions/models/permission.model';
 // This should be a real class/interface representing a user entity
 // export type User = any;
 
