@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { GlobalTransformInterceptor } from './common/interceptors/transform.interceptor';
 import databaseConfig from './db/config/config';
@@ -15,8 +15,9 @@ import { I18nModule, AcceptLanguageResolver, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 
 // Import versioned API module
-import { V1Module } from './v1/v1.module';
+import { V1Module } from './api/v1/v1.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { AllExceptionsFilter } from './common/filters/allExceptions.filter';
 
 @Module({
   imports: [
@@ -60,6 +61,10 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor, // innermost: formats success responses
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter, // Nest will inject dependencies here
     },
   ],
 })

@@ -3,5 +3,16 @@
   "fetched": "Utilisateur avec l'ID {id} récupéré avec succès",
   "allFetched": "Utilisateurs récupérés avec succès",
   "updated": "Utilisateur avec l'ID {id} mis à jour avec succès",
-  "deleted": "Utilisateur avec l'ID {id} supprimé avec succès"
+  "deleted": "Utilisateur avec l'ID {id} supprimé avec succès",
+  "error.exists": "Désolé, un utilisateur existe déjà avec ce nom d'utilisateur ou e-mail",
+  "error.sameRole": "Désolé, vous ne pouvez pas créer un utilisateur avec votre propre rôle",
+  "error.hierarchyViolation": "Vous ne pouvez pas attribuer un rôle en dehors de votre hiérarchie",
+  "error.parentNotFound": "Utilisateur parent avec l'ID {{id}} introuvable",
+  "error.noParentPermission": "Vous n'avez pas la permission d'utiliser cet utilisateur parent",
+  "error.notFound": "Utilisateur avec l'ID {{id}} introuvable",
+  "error.noDescendantView": "Vous ne pouvez voir que les descendants en tant que parents",
+  "error.noModifyPermission": "Vous n'avez pas la permission de modifier cet utilisateur",
+  "error.circularParent": "L'assignation circulaire de parent n'est pas autorisée",
+  "error.noDeletePermission": "Vous n'avez pas la permission de supprimer cet utilisateur",
+  "deletedMessage": "Utilisateur supprimé avec l'ID : {{id}}"
 }

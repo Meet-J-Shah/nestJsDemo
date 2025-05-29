@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateRoleDto } from './dto/createRole.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { User } from 'src/v1/users/models/user.model';
+import { User } from 'src/api/v1/users/models/user.model';
 import { Role } from './models/role.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreationAttributes, Op } from 'sequelize';

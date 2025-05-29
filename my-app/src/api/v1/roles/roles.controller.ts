@@ -16,7 +16,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RoleIdParamDto } from './dto/roleIdParams.dto';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
-import { Permissions } from '../../common/decorators/permissions.decorator';
+import { Permissions } from '../../../common/decorators/permissions.decorator';
 @Controller('roles')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class RolesController {

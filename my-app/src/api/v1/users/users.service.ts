@@ -17,8 +17,8 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { Sequelize } from 'sequelize-typescript';
 import { reqUser } from 'src/common/interfaces/reqUser.interface';
 import { Op } from 'sequelize';
-import { Role } from 'src/v1/roles/models/role.model';
-import { Permission } from 'src/v1/permissions/models/permission.model';
+import { Role } from 'src/api/v1/roles/models/role.model';
+import { Permission } from 'src/api/v1/permissions/models/permission.model';
 // This should be a real class/interface representing a user entity
 // export type User = any;
 
@@ -111,8 +111,13 @@ export class UsersService {
         include: [{ model: User, as: 'children' }],
       });
 
-      if (!user) return null;
-
+      if (!user) {
+        // throw new NotFoundException('user.error.noDescendantView');
+        throw new NotFoundException({
+          message: 'user.error.notFound',
+          args: { id: userId },
+        });
+      }
       // Recursively fetch children
       if (user.children && user.children.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -138,7 +143,11 @@ export class UsersService {
   async findOneV2(id: number, reqUser: reqUser) {
     const user = await this.userModel.findByPk(id);
     if (!user) {
-      throw new NotFoundException(`User with id ${id} not found`);
+      // throw new NotFoundException('user.error.noDescendantView');
+      throw new NotFoundException({
+        message: 'user.error.notFound',
+        args: { id: id },
+      });
     }
     const creatorParent = await isAncestorCTEWithSequelize(
       this.sequelize,
@@ -147,7 +156,7 @@ export class UsersService {
       id,
     );
     if (!creatorParent) {
-      throw new ForbiddenException('You can only see descendants as parents');
+      throw new ForbiddenException('user.error.noDescendantView');
     }
     return user;
   }
@@ -155,7 +164,10 @@ export class UsersService {
   async update(id: number, updateUserDto: UpdateUserDto, reqUser: reqUser) {
     const user = await User.findByPk(id);
     if (!user) {
-      throw new NotFoundException(`User with id ${id} not found`);
+      throw new NotFoundException({
+        message: 'user.error.notFound',
+        args: { id: id },
+      });
     }
 
     // const userParent = await isAncestor(User, userId, id);
@@ -173,9 +185,7 @@ export class UsersService {
     //   id,
     // );
     if (!userParent || !userParent2) {
-      throw new ForbiddenException(
-        "You don't have permission to modify this user",
-      );
+      throw new ForbiddenException('user.error.noModifyPermission');
     }
 
     if (updateUserDto.roleId) {
@@ -191,9 +201,7 @@ export class UsersService {
       //   updateUserDto.roleId ?? 0,
       // );
       if (!userRole) {
-        throw new ForbiddenException(
-          "You can't assign a role outside your hierarchy",
-        );
+        throw new ForbiddenException('user.error.hierarchyViolation');
       }
     }
     if (updateUserDto.parentId) {
@@ -212,9 +220,7 @@ export class UsersService {
       //   updateUserDto.parentId,
       // );
       if (!userParentDecendent) {
-        throw new ForbiddenException(
-          'You can only assign descendants as parents',
-        );
+        throw new ForbiddenException('user.error.noAssignParent');
       }
       //check that updated parent is not suceesor of the user
       const userParentAnsector = idIndex < updateParentIndex;
@@ -224,9 +230,7 @@ export class UsersService {
       //   updateUserDto.parentId,
       // );
       if (userParentAnsector) {
-        throw new BadRequestException(
-          'Circular parent assignment is not allowed',
-        );
+        throw new BadRequestException('user.error.circularParent');
       }
     }
 
@@ -237,7 +241,10 @@ export class UsersService {
   async remove(id: number, reqUser: reqUser) {
     const user = await User.findByPk(id);
     if (!user) {
-      throw new NotFoundException(`User with id ${id} not found`);
+      throw new NotFoundException({
+        message: 'user.error.notFound',
+        args: { id: id },
+      });
     }
     const userParent = await isAncestorCTEWithSequelize(
       this.sequelize,
@@ -246,9 +253,7 @@ export class UsersService {
       id,
     );
     if (!userParent) {
-      throw new ForbiddenException(
-        "You don't have permission to delete this user",
-      );
+      throw new ForbiddenException('user.error.noDeletePermission');
     }
     return `user is  deleted having id:- ${id}`;
   }

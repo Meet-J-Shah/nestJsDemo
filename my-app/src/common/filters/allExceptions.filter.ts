@@ -1,42 +1,62 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
-  ExceptionFilter,
+  Injectable,
   Catch,
+  ExceptionFilter,
   ArgumentsHost,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
 import { Request, Response } from 'express';
 
+@Injectable()
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
+  constructor(private readonly i18n: I18nService) {}
+
+  async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    const lang =
+      (request.headers['x-custom-lang'] as string) ??
+      (request.headers['accept-language']?.split(',')[0] as string) ??
+      'en';
+
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string | string[] = 'Internal server error';
+    let message: string | string[] = 'errors.INTERNAL_SERVER_ERROR'; // default i18n key
+    let args = {};
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
 
       const exceptionResponse = exception.getResponse();
 
-      // Handle message extraction for both string and object-style exceptions
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (
         typeof exceptionResponse === 'object' &&
         exceptionResponse !== null
       ) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const res = exceptionResponse as any;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         message = res.message || message;
+        args = res.args || {};
       }
     } else if (exception instanceof Error) {
-      // For unexpected errors
       message = exception.message;
+    }
+
+    // Translate the message using args
+    try {
+      if (typeof message === 'string') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        message = await this.i18n.translate(message, { lang, args });
+      }
+    } catch (error) {
+      console.error('i18n translation failed:', error);
     }
 
     console.error(' Exception caught:', exception);

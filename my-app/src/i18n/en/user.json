@@ -3,5 +3,17 @@
   "fetched": "User with ID {id} fetched successfully",
   "allFetched": "Users fetched successfully",
   "updated": "User with ID {id} updated successfully",
-  "deleted": "User with ID {id} deleted successfully"
+  "deleted": "User with ID {id} deleted successfully",
+  "error.exists": "Sorry, User already exists with this username or Email",
+  "error.sameRole": "Sorry, you can't create a user with your own role",
+  "error.hierarchyViolation": "You can't assign a role outside your hierarchy",
+  "error.parentNotFound": "Parent User with ID {id} not found",
+  "error.noParentPermission": "You don't have permission to use this parent as user",
+  "error.noAssignParent": "You can only assign descendants as parents",
+  "error.notFound": "User with ID {id} not found",
+  "error.noDescendantView": "You can only see descendants as parents",
+  "error.noModifyPermission": "You don't have permission to modify this user",
+  "error.circularParent": "Circular parent assignment is not allowed",
+  "error.noDeletePermission": "You don't have permission to delete this user",
+  "deletedMessage": "User is deleted having ID: {id}"
 }
