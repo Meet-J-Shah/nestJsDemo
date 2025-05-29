@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 // src/common/interceptors/global-transform.interceptor.ts
 
@@ -25,6 +24,7 @@ export class GlobalTransformInterceptor implements NestInterceptor {
       map((data) => {
         if (!dto) return data;
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return plainToInstance(dto, data, {
           excludeExtraneousValues: true,
         });

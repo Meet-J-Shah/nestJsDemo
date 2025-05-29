@@ -11,7 +11,7 @@ import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/createBook.dto';
 import { UpdateBookDto } from './dto/updateBook.dto';
 import { BookResponseDto } from './dto/bookResponse.dto';
-import { TransformDto } from '../common/decorators/transform.dto';
+import { TransformDto } from '../../../common/decorators/transform.dto';
 
 @Controller('books')
 export class BooksController {

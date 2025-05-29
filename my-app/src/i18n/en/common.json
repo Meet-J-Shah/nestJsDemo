@@ -1,0 +1,8 @@
+{
+  "greet": "Hello!",
+  "user.created": "User successfully created.",
+  "messages": {
+    "ITEMS_FETCHED": "Items fetched successfully",
+    "USER_CREATED": "User created successfully"
+  }
+}
