@@ -24,14 +24,14 @@ export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
   //   @Permissions('assign_permission')
-  @Post()
-  async assignPermissionToRole(
-    @Body() dto: CreateRolePermissionDto,
-    @Req() req: Request & { user: any },
-  ) {
-    // passing roleId of requester from JWT user info
-    return this.permissionService.create(dto, req.user.roleId);
-  }
+  // @Post()
+  // async assignPermissionToRole(
+  //   @Body() dto: CreateRolePermissionDto,
+  //   @Req() req: Request & { user: any },
+  // ) {
+  //   // passing roleId of requester from JWT user info
+  //   return this.permissionService.create(dto, req.user.roleId);
+  // }
 
   //   @Permissions('read_permission')
   @Get()
@@ -40,10 +40,10 @@ export class PermissionController {
   }
 
   //   @Permissions('read_permission')
-  @Get('assigned')
-  async findAllConnected(@Req() req: Request & { user: any }) {
-    return this.permissionService.findAllConnected(req.user.roleId);
-  }
+  // @Get('assigned')
+  // async findAllConnected(@Req() req: Request & { user: any }) {
+  //   return this.permissionService.findAllConnected(req.user.roleId);
+  // }
 
   //   @Permissions('read_permission')
   @Get('role/:id')
@@ -67,18 +67,18 @@ export class PermissionController {
   }
 
   //   @Permissions('read_permission')
-  @Get(':key1/:key2')
-  async findOneById(
-    @Param('key1') roleId: number,
-    @Param('key2') permissionId: number,
-    @Req() req: Request & { user: any },
-  ) {
-    return this.permissionService.findOneById(
-      roleId,
-      permissionId,
-      req.user.roleId,
-    );
-  }
+  // @Get(':key1/:key2')
+  // async findOneById(
+  //   @Param('key1') roleId: number,
+  //   @Param('key2') permissionId: number,
+  //   @Req() req: Request & { user: any },
+  // ) {
+  //   return this.permissionService.findOneById(
+  //     roleId,
+  //     permissionId,
+  //     req.user.roleId,
+  //   );
+  // }
 
   //   @Permissions('update_permission')
   //   @Patch(':key1/:key2')
@@ -97,12 +97,12 @@ export class PermissionController {
   //   }
 
   //   @Permissions('delete_permission')
-  @Delete(':key1/:key2')
-  async remove(
-    @Param('key1') roleId: number,
-    @Param('key2') permissionId: number,
-    @Req() req: Request & { user: any },
-  ) {
-    return this.permissionService.remove(roleId, permissionId, req.user.roleId);
-  }
+  // @Delete(':key1/:key2')
+  // async remove(
+  //   @Param('key1') roleId: number,
+  //   @Param('key2') permissionId: number,
+  //   @Req() req: Request & { user: any },
+  // ) {
+  //   return this.permissionService.remove(roleId, permissionId, req.user.roleId);
+  // }
 }

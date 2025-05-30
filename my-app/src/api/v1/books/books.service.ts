@@ -16,7 +16,8 @@ export class BooksService {
     const book = await this.bookModel.create(
       createBookDto as BookCreationAttrs,
     );
-    const bk = await Book.findByPk(book.bookId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const bk = await Book.findByPk(book.id);
     return bk;
   }
 

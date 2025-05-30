@@ -7,7 +7,7 @@ import { Permission } from './models/permission.model';
 import { Role } from 'src/api/v1/roles/models/role.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreationAttributes } from 'sequelize';
-import { RolePermission } from './models/rolePermission.model';
+// import { RolePermission } from './models/rolePermission.model';
 import { CreateRolePermissionDto } from './dto/createRolePermission.dto';
 
 @Injectable()
@@ -17,25 +17,25 @@ export class PermissionService {
     private readonly permissionModel: typeof Permission,
   ) {}
 
-  async create(createRolePermission: CreateRolePermissionDto, roleId: number) {
-    if (roleId !== 1) {
-      throw new BadRequestException('Permission Only See By Super Admin');
-    }
-    const role = await Role.findByPk(createRolePermission.roleId);
-    const permission = await Permission.findByPk(
-      createRolePermission.permissionId,
-    );
-    if (!role || !permission) {
-      throw new BadRequestException(
-        'Seleted  Role Or Permission does not Exist',
-      );
-    }
-    const rolePermission = await RolePermission.create({
-      roleId: createRolePermission.roleId,
-      permissionId: createRolePermission.permissionId,
-    } as CreationAttributes<RolePermission>);
-    return rolePermission;
-  }
+  // async create(createRolePermission: CreateRolePermissionDto, roleId: number) {
+  //   if (roleId !== 1) {
+  //     throw new BadRequestException('Permission Only See By Super Admin');
+  //   }
+  //   const role = await Role.findByPk(createRolePermission.roleId);
+  //   const permission = await Permission.findByPk(
+  //     createRolePermission.permissionId,
+  //   );
+  //   if (!role || !permission) {
+  //     throw new BadRequestException(
+  //       'Seleted  Role Or Permission does not Exist',
+  //     );
+  //   }
+  //   const rolePermission = await RolePermission.create({
+  //     roleId: createRolePermission.roleId,
+  //     permissionId: createRolePermission.permissionId,
+  //   } as CreationAttributes<RolePermission>);
+  //   return rolePermission;
+  // }
 
   async findAll(roleId: number) {
     if (roleId !== 1) {
@@ -44,13 +44,13 @@ export class PermissionService {
     const permissions = await Permission.findAll();
     return permissions;
   }
-  async findAllConnected(roleId: number) {
-    if (roleId !== 1) {
-      throw new BadRequestException('Permission Only See By Super Admin');
-    }
-    const permissions = await RolePermission.findAll();
-    return permissions;
-  }
+  // async findAllConnected(roleId: number) {
+  //   if (roleId !== 1) {
+  //     throw new BadRequestException('Permission Only See By Super Admin');
+  //   }
+  //   // const permissions = await RolePermission.findAll();
+  //   // return permissions;
+  // }
 
   async findOneByRole(id: number, roleId: number) {
     if (roleId !== 1) {
@@ -80,22 +80,22 @@ export class PermissionService {
     });
     return permission;
   }
-  async findOneById(
-    roleId: number,
-    permissionId: number,
-    reqUserRoleId: number,
-  ) {
-    if (reqUserRoleId !== 1) {
-      throw new BadRequestException('Permission Only See By Super Admin');
-    }
-    const permission = await RolePermission.findOne({
-      where: { roleId: roleId, permissionId: permissionId },
-    });
-    if (!permission) {
-      throw new NotFoundException('Requested this does not exist ');
-    }
-    return permission;
-  }
+  // async findOneById(
+  //   roleId: number,
+  //   permissionId: number,
+  //   reqUserRoleId: number,
+  // ) {
+  //   if (reqUserRoleId !== 1) {
+  //     throw new BadRequestException('Permission Only See By Super Admin');
+  //   }
+  //   const permission = await RolePermission.findOne({
+  //     where: { roleId: roleId, permissionId: permissionId },
+  //   });
+  //   if (!permission) {
+  //     throw new NotFoundException('Requested this does not exist ');
+  //   }
+  //   return permission;
+  // }
 
   // async update(
   //   roleId: number,
@@ -132,19 +132,19 @@ export class PermissionService {
   //   return rolePermission;
   // }
 
-  async remove(roleId: number, permissionId: number, reqUserRoleId: number) {
-    if (reqUserRoleId !== 1) {
-      throw new BadRequestException('Permission Only See By Super Admin');
-    }
-    const permission = await RolePermission.findOne({
-      where: { roleId: roleId, permissionId: permissionId },
-    });
-    if (!permission) {
-      throw new NotFoundException('Requested this does not exist ');
-    }
+  // async remove(roleId: number, permissionId: number, reqUserRoleId: number) {
+  //   if (reqUserRoleId !== 1) {
+  //     throw new BadRequestException('Permission Only See By Super Admin');
+  //   }
+  //   const permission = await RolePermission.findOne({
+  //     where: { roleId: roleId, permissionId: permissionId },
+  //   });
+  //   if (!permission) {
+  //     throw new NotFoundException('Requested this does not exist ');
+  //   }
 
-    await permission.destroy();
-    return `Permission of havind Id ${permission.permissionId} to assigned 
-        to role Having Id ${permission.roleId}is removed`;
-  }
+  //   await permission.destroy();
+  //   return `Permission of havind Id ${permission.permissionId} to assigned
+  //       to role Having Id ${permission.roleId}is removed`;
+  // }
 }

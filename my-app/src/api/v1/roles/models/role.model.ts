@@ -10,12 +10,12 @@ import {
 } from 'sequelize-typescript';
 import { User } from '../../users/models/user.model';
 import { Permission } from 'src/api/v1/permissions/models/permission.model';
-import { RolePermission } from 'src/api/v1/permissions/models/rolePermission.model';
+// import { RolePermission } from 'src/api/v1/permissions/models/rolePermission.model';
 
 @Table({
   timestamps: true, // enable createdAt and updatedAt
   paranoid: true, // enable deletedAt (soft delete)
-  // underscored: true, // use snake_case column names
+  underscored: true, // use snake_case column names
 })
 export class Role extends Model<Role> {
   @Column({ type: DataType.STRING, unique: true, allowNull: false })
@@ -43,6 +43,11 @@ export class Role extends Model<Role> {
   @HasMany(() => Role, 'parentId')
   children: Role[];
 
-  @BelongsToMany(() => Permission, () => RolePermission)
+  @BelongsToMany(() => Permission, {
+    through: 'role_permissions',
+    foreignKey: 'role_id',
+    otherKey: 'permission_id',
+    timestamps: false,
+  })
   permissions: Permission[];
 }

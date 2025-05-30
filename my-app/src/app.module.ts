@@ -33,7 +33,7 @@ import { AllExceptionsFilter } from './common/filters/allExceptions.filter';
       },
       logging: true,
     }),
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
@@ -41,7 +41,6 @@ import { AllExceptionsFilter } from './common/filters/allExceptions.filter';
         watch: true, // enable live reload in dev
       },
       resolvers: [
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         { use: QueryResolver, options: ['lang'] }, // check ?lang= query param
         AcceptLanguageResolver, // check Accept-Language header
       ],
