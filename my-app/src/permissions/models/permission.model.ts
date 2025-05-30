@@ -1,9 +1,14 @@
 // permission.model.ts
 import { Table, Column, Model, BelongsToMany } from 'sequelize-typescript';
-import { Role } from './role.model';
-import { RolePermission } from './role-permission.model';
+import { Role } from '../../roles/models/role.model';
+import { RolePermission } from '../models/rolePermission.model';
 
-@Table({ tableName: 'permissions', timestamps: true, paranoid: true })
+@Table({
+  tableName: 'permissions',
+  timestamps: true,
+  paranoid: true,
+  underscored: true,
+})
 export class Permission extends Model<Permission> {
   @Column
   name: string;
