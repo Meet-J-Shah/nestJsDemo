@@ -48,25 +48,33 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // console.log(user.dataValues.role.dataValues.permissions);
     console.log(user);
     const permissions = user.role?.permissions?.map((p) => p.name) || [];
-    // const mj = user.dataValues.role.dataValues.permissions;
-    // console.log(mj);
+    console.log('✅ JwtStrategy.validate() called with payload:', payload);
+    process.stdout.write('✅ validate() reached\n');
 
-    // const perms: string[] = [];
+    const mj = user.dataValues.role.dataValues.permissions;
+    console.log(mj);
 
-    // const plainUser = user.toJSON(); // Converts entire nested object
-    // const permissions2 = plainUser.role.permissions.map((perm) => perm.name);
-    // console.log('Permissions:', permissions2);
+    const perms: string[] = [];
 
-    // mj.forEach((element) => {
-    //   perms.push(element.dataValues.name);
-    //   console.log(element);
-    // });
-    // console.log('dnf', perms);
+    const plainUser = user.toJSON(); // Converts entire nested object
+    const permissions2 = plainUser.role.permissions.map((perm) => perm.name);
+    console.log('Permissions:', permissions2);
+
+    mj.forEach((element) => {
+      perms.push(element.dataValues.name);
+      console.log(element);
+    });
+    console.log('dnf', perms);
+    process.stdout.write(
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      `✅ User fetched with ID: ${user.id}, Role: ${user.role?.name}, Permissions: ${perms}`,
+    );
+
     return {
       userId: user.id,
       roleId: user.roleId,
       username: user.userName,
-      permissions, // attach permissions here
+      perms, // attach permissions here
     };
   }
 }
