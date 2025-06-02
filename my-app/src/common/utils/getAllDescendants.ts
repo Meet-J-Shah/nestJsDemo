@@ -73,13 +73,13 @@ export async function isAncestorCTEWithSequelize(
 
   const query = `
     WITH RECURSIVE parent_chain AS (
-      SELECT id, parentId
+      SELECT id, parent_id
       FROM ${tableName}
       WHERE id = :descendantId
       UNION ALL
-      SELECT t.id, t.parentId
+      SELECT t.id, t.parent_id
       FROM ${tableName} t
-      INNER JOIN parent_chain pc ON pc.parentId = t.id
+      INNER JOIN parent_chain pc ON pc.parent_id = t.id
     )
     SELECT 1 FROM parent_chain WHERE id = :ancestorId LIMIT 1;
   `;

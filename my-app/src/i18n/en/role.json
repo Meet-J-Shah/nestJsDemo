@@ -1,0 +1,21 @@
+{
+  "created": "Role created successfully",
+  "fetched": "Role with Requested Id fetched successfully",
+  "allFetched": "Roles fetched successfully",
+  "updated": "Role with Requested Id updated successfully",
+  "deleted": "Role with Requested Id deleted successfully",
+  "error.exists": "Role With This name Already Exist in The Db",
+  "error.sameAsParent": "A role cannot be assigned as its own parent",
+  "error.circularParent": "Circular parent role assignment is not allowed",
+  "error.noModifyPermissionParent": "You don't have permission to use this parent role",
+  "error.noAssignPermission": "You can only assign descendant roles as children",
+  "error.notFound": "Role with ID {id} not found",
+  "error.parentNotFound": "Parent Role with ID {id} not found",
+  "error.noModifyPermission": "You don't have permission to modify this role",
+  "error.noViewPermission": "You don't have permission to view this role",
+  "error.noDeletePermission": "You don't have permission to delete this role",
+  "error.hierarchyViolation": "Hierarchy validation failed. Operation not permitted.",
+  "error.noModifyPermissionParent2": "You don't have permission to assign this role as parent",
+  "error.associatedUsers": "Users are associated with this role. You can't delete it.",
+  "error.notUserChild": "You can't delete this role — not in your user hierarchy"
+}

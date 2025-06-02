@@ -8,7 +8,6 @@ import { User } from 'src/api/v1/users/models/user.model';
 // import { reqUser } from 'src/common/interfaces/reqUser.interface';
 import { Role } from '../roles/models/role.model';
 import { Permission } from '../permissions/models/permission.model';
-import { console } from 'inspector';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -22,7 +21,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     // Fetch the user with role and permissions
-    console.log('dsbgkj');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const user = await User.findByPk(payload.sub, {
       include: [
@@ -45,36 +43,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Extract permission names
-    // console.log(user.dataValues.role.dataValues.permissions);
-    console.log(user);
-    const permissions = user.role?.permissions?.map((p) => p.name) || [];
-    console.log('✅ JwtStrategy.validate() called with payload:', payload);
-    process.stdout.write('✅ validate() reached\n');
-
-    const mj = user.dataValues.role.dataValues.permissions;
-    console.log(mj);
-
+    const permissions = user.dataValues.role.dataValues.permissions;
     const perms: string[] = [];
-
-    const plainUser = user.toJSON(); // Converts entire nested object
-    const permissions2 = plainUser.role.permissions.map((perm) => perm.name);
-    console.log('Permissions:', permissions2);
-
-    mj.forEach((element) => {
+    permissions.forEach((element) => {
       perms.push(element.dataValues.name);
-      console.log(element);
     });
-    console.log('dnf', perms);
-    process.stdout.write(
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      `✅ User fetched with ID: ${user.id}, Role: ${user.role?.name}, Permissions: ${perms}`,
-    );
-
+    // console.log(
+    //   // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    //   ` User fetched with ID: ${user.id}, Role: ${user.dataValues.role?.dataValues.name}, Permissions: ${perms}`,
+    // );
     return {
       userId: user.id,
-      roleId: user.roleId,
-      username: user.userName,
-      perms, // attach permissions here
+      roleId: user.dataValues.roleId,
+      username: user.dataValues.userName,
+      permissions: perms, // attach permissions here
     };
   }
 }

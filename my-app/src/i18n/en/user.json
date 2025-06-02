@@ -1,9 +1,9 @@
 {
   "created": "User created successfully",
-  "fetched": "User with ID {id} fetched successfully",
+  "fetched": "User with Requested Id fetched successfully",
   "allFetched": "Users fetched successfully",
-  "updated": "User with ID {id} updated successfully",
-  "deleted": "User with ID {id} deleted successfully",
+  "updated": "User with Requested Id updated successfully",
+  "deleted": "User with Requested Id deleted successfully",
   "error.exists": "Sorry, User already exists with this username or Email",
   "error.sameRole": "Sorry, you can't create a user with your own role",
   "error.hierarchyViolation": "You can't assign a role outside your hierarchy",

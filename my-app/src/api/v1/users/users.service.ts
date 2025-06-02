@@ -41,14 +41,10 @@ export class UsersService {
       },
     });
     if (existingUser) {
-      throw new BadRequestException(
-        'Sorry, User Already Exist with this username or Email',
-      );
+      throw new BadRequestException('user.error.exists');
     }
     if (reqUser.roleId === createUserDto.roleId) {
-      throw new ForbiddenException(
-        "Sorry, you can't create a user with your own role",
-      );
+      throw new ForbiddenException('user.error.sameRole');
     }
 
     const userRole = await isAncestorCTEWithSequelize(
@@ -59,17 +55,16 @@ export class UsersService {
     );
 
     if (!userRole && reqUser.roleId == createUserDto.roleId) {
-      throw new ForbiddenException(
-        "You can't assign a role outside your hierarchy",
-      );
+      throw new ForbiddenException('user.error.hierarchyViolation');
     }
 
     if (createUserDto.parentId) {
       const parentRole = await this.userModel.findByPk(createUserDto.parentId);
       if (!parentRole) {
-        throw new NotFoundException(
-          `Parent User with id ${createUserDto.parentId} not found`,
-        );
+        throw new NotFoundException({
+          message: 'user.error.parentNotFound',
+          args: { id: createUserDto.parentId },
+        });
       }
 
       // Check if user has permission to use this parent user
@@ -81,9 +76,7 @@ export class UsersService {
       );
 
       if (!userCanAssignParent) {
-        throw new ForbiddenException(
-          "You don't have permission to use this parent as user",
-        );
+        throw new ForbiddenException('user.error.noParentPermission');
       }
     }
 
