@@ -169,7 +169,7 @@ export class UsersService {
     // const userParent = await isAncestor(User, userId, id);
     const hierarchy = await getAncestryPath(this.sequelize, 'users', id);
     const idIndex = hierarchy.indexOf(id);
-    const parentIndex = hierarchy.indexOf(user.dataValues.parentId);
+    const parentIndex = hierarchy.indexOf(user.get('parentId'));
     const requestUserIdIndex = hierarchy.indexOf(reqUser.userId);
     const userParent = requestUserIdIndex < idIndex;
     const userParent2 = requestUserIdIndex < parentIndex;
@@ -264,13 +264,13 @@ export class UsersService {
       },
     });
 
-    if (!role || !role.dataValues.permissions) {
+    if (!role || !role.get('permissions')) {
       return [];
     }
     const perms: string[] = [];
 
-    role.dataValues.permissions.forEach((element) => {
-      perms.push(element.dataValues.name);
+    role.get('permissions').forEach((element) => {
+      perms.push(element.get('name'));
     });
 
     return perms;

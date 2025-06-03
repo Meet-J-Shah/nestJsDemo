@@ -57,8 +57,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // );
     return {
       userId: user.id,
-      roleId: user.dataValues.roleId,
-      username: user.dataValues.userName,
+      roleId: user.get('roleId'),
+      username: user.get('userName'),
       permissions: perms, // attach permissions here
     };
   }

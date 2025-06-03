@@ -60,7 +60,7 @@ export class RolesService {
       parentId: createRoleDto.parentId ?? userRoleId, // Default to user role if none provided
     } as CreationAttributes<Role>);
 
-    return this.roleModel.findByPk(newRole.dataValues.id as number);
+    return this.roleModel.findByPk(newRole.get('id') as number);
   }
 
   async findAll(reqUser: reqUser) {
@@ -104,7 +104,7 @@ export class RolesService {
       this.sequelize,
       'users',
       reqUser.userId,
-      role.dataValues.creatorId,
+      role.get('creatorId'),
     );
     if (!creatorParent) {
       throw new ForbiddenException('role.error.noViewPermission');
@@ -143,7 +143,7 @@ export class RolesService {
       this.sequelize,
       'users',
       reqUser.userId,
-      role.dataValues.creatorId,
+      role.get('creatorId'),
     );
     if (!creatorParent) {
       throw new ForbiddenException('role.error.noModifyPermission');
@@ -208,7 +208,7 @@ export class RolesService {
       this.sequelize,
       'users',
       reqUser.userId,
-      role.dataValues.creatorId,
+      role.get('creatorId'),
     );
     if (!creatorParent) {
       throw new ForbiddenException('role.error.notUserChild');

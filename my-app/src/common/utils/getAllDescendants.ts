@@ -18,8 +18,7 @@ export async function getAllDescendants<T extends Model & WithHierarchyKeys>(
   for (const child of children) {
     result.push(child);
     if (child.id !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      await getAllDescendants(model, child.dataValues.id, result);
+      await getAllDescendants(model, child.get('id'), result);
     }
   }
 
