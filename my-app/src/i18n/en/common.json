@@ -4,5 +4,9 @@
   "messages": {
     "ITEMS_FETCHED": "Items fetched successfully",
     "USER_CREATED": "User created successfully"
+  },
+  "errors": {
+    "not_authorized": "Not authorized",
+    "notSuperAdmin": "Only Super Admin can perform this action"
   }
 }
