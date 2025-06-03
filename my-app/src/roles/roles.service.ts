@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -8,27 +9,31 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { User } from 'src/users/models/user.model';
 import { Role } from './models/role.model';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreationAttributes } from 'sequelize';
+import { CreationAttributes, Op } from 'sequelize';
 import {
-  getAllDescendants,
-  isAncestor,
+  // getAllDescendants,
+  getAncestryPath,
+  isAncestorCTEWithSequelize,
 } from 'src/common/utils/getAllDescendants';
+import { reqUser } from 'src/common/interfaces/reqUser.interface';
+import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
 export class RolesService {
   constructor(
     @InjectModel(Role)
     private readonly roleModel: typeof Role,
+    private readonly sequelize: Sequelize,
   ) {}
 
-  async create(createRoleDto: CreateRoleDto, userId: number) {
-    const user = await User.findByPk(userId);
-    // if (!user) {
-    //   throw new NotFoundException(`User with id ${userId} not found`);
-    // }
-
-    const userRoleId = user?.dataValues.roleId;
-
+  async create(createRoleDto: CreateRoleDto, reqUser: reqUser) {
+    const userRoleId = reqUser.roleId;
+    const ifExist = await Role.findOne({ where: { name: createRoleDto.name } });
+    if (ifExist) {
+      throw new BadRequestException(
+        'Role With This name Already Exist in The Db',
+      );
+    }
     if (createRoleDto.parentId) {
       const parentRole = await this.roleModel.findByPk(createRoleDto.parentId);
       if (!parentRole) {
@@ -38,9 +43,10 @@ export class RolesService {
       }
 
       // Check if user has permission to use this parent role
-      const userCanAssignParent = await isAncestor(
-        Role,
-        userRoleId ?? 0,
+      const userCanAssignParent = await isAncestorCTEWithSequelize(
+        this.sequelize,
+        'roles',
+        userRoleId,
         createRoleDto.parentId,
       );
 
@@ -53,30 +59,48 @@ export class RolesService {
 
     const newRole = await this.roleModel.create({
       name: createRoleDto.name,
-      creatorId: userId,
+      creatorId: reqUser.userId,
       parentId: createRoleDto.parentId ?? userRoleId, // Default to user role if none provided
     } as CreationAttributes<Role>);
 
     return this.roleModel.findByPk(+newRole.dataValues.id);
   }
 
-  async findAll(userId: number) {
-    const user = await User.findByPk(userId);
-    // const userRole = await Role.findByPk(user?.dataValues.roleId);
-    const roleId = user?.dataValues.roleId ?? Infinity;
+  async findAll(reqUser: reqUser) {
+    async function getUserWithAllChildren(userId: number): Promise<any> {
+      const role = await Role.findOne({
+        where: { id: userId },
+        include: [{ model: Role, as: 'children' }],
+      });
 
-    const allChildren = await getAllDescendants(Role, roleId);
+      if (!role) return null;
+
+      // Recursively fetch children
+      if (role.children && role.children.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        role.children = await Promise.all(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+          role.children.map((child: any) => getUserWithAllChildren(child.id)),
+        );
+      }
+
+      return role;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const allChildren = await getUserWithAllChildren(reqUser.roleId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return allChildren;
   }
 
-  async findOne(id: number, userId: number) {
+  async findOne(id: number, reqUser: reqUser) {
     const role = await this.roleModel.findByPk(id);
     if (!role) {
       throw new NotFoundException(`Role with id ${id} not found`);
     }
-    const creatorParent = await isAncestor(
-      User,
-      userId,
+    const creatorParent = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'users',
+      reqUser.userId,
       role.dataValues.creatorId,
     );
     if (!creatorParent) {
@@ -84,13 +108,11 @@ export class RolesService {
         `You don't have permission to view this role`,
       );
     }
-    const reqUser = await User.findByPk(userId);
-    if (!reqUser) {
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
-    const reqUserAncestor = await isAncestor(
-      Role,
-      reqUser.dataValues.roleId,
+
+    const reqUserAncestor = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'roles',
+      reqUser.roleId,
       id,
     );
     if (!reqUserAncestor) {
@@ -99,20 +121,26 @@ export class RolesService {
     return role;
   }
 
-  async update(id: number, updateRoleDto: UpdateRoleDto, userId: number) {
+  async update(id: number, updateRoleDto: UpdateRoleDto, reqUser: reqUser) {
     const role = await this.roleModel.findByPk(id, { paranoid: false });
+    const ifExist = await Role.findOne({
+      where: {
+        [Op.and]: [{ name: updateRoleDto.name }, { id: { [Op.not]: id } }],
+      },
+    });
+    if (ifExist) {
+      throw new BadRequestException(
+        'Role With This name Already Exist in The Db',
+      );
+    }
     if (!role) {
       throw new NotFoundException(`Role with id ${id} not found`);
     }
-    const asscoiateUser = await User.findOne({ where: { id: userId } });
-    if (!asscoiateUser) {
-      throw new NotFoundException(
-        `Requesting user with id ${userId} not found`,
-      );
-    }
-    const creatorParent = await isAncestor(
-      User,
-      userId,
+
+    const creatorParent = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'users',
+      reqUser.userId,
       role.dataValues.creatorId,
     );
     if (!creatorParent) {
@@ -124,34 +152,39 @@ export class RolesService {
       await role.update(updateRoleDto);
       return role;
     }
-    async function validateRoleHierarchy(
-      userroleId: number,
+    const validateRoleHierarchy = async (
+      userRoleId: number,
       roleId: number,
       updatedParentroleId: number,
-    ): Promise<boolean> {
+    ): Promise<boolean> => {
+      const hierarchy = await getAncestryPath(this.sequelize, 'roles', roleId);
+      const idIndex = hierarchy.indexOf(roleId);
+      const requestUserIdIndex = hierarchy.indexOf(userRoleId);
       // Check if updatedParentroleId is ancestor of roleId
-      const updatedIsAncestorOfRole = await isAncestor(
-        Role,
+      const updatedIsAncestorOfRole = await isAncestorCTEWithSequelize(
+        this.sequelize,
+        'roles',
         roleId,
         updatedParentroleId,
       );
-      console.log('mj4');
       if (updatedIsAncestorOfRole) return false;
-
-      // Check if userroleId is same as updatedParentroleId or ancestor of updatedParentroleId
-      if (userroleId === updatedParentroleId) return true;
-
-      const userIsAncestorOfUpdated = await isAncestor(
-        Role,
-        userroleId,
+      const validReqUser = await isAncestorCTEWithSequelize(
+        this.sequelize,
+        'roles',
+        userRoleId,
         updatedParentroleId,
       );
+      // Check if userRoleId is same as updatedParentroleId or ancestor of updatedParentroleId
+      if (userRoleId === updatedParentroleId) return true;
+
+      const userIsAncestorOfUpdated =
+        requestUserIdIndex < idIndex && validReqUser;
       return userIsAncestorOfUpdated;
-    }
+    };
     const valid = await validateRoleHierarchy(
-      asscoiateUser.dataValues.roleId,
+      reqUser.roleId,
       id,
-      updateRoleDto.parentId ?? Infinity,
+      updateRoleDto.parentId,
     );
     if (valid) {
       console.log('Hierarchy conditions satisfied.');
@@ -165,14 +198,15 @@ export class RolesService {
     }
   }
 
-  async remove(id: number, userId: number) {
+  async remove(id: number, reqUser: reqUser) {
     const role = await this.roleModel.findByPk(id);
     if (!role) {
       throw new NotFoundException(`Role with id ${id} not found`);
     }
-    const creatorParent = await isAncestor(
-      User,
-      userId,
+    const creatorParent = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'users',
+      reqUser.userId,
       role.dataValues.creatorId,
     );
     if (!creatorParent) {
@@ -180,13 +214,10 @@ export class RolesService {
         "You can't delete this role — not in your user hierarchy",
       );
     }
-    const reqUser = await User.findByPk(userId);
-    if (!reqUser) {
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
-    const reqUserAncestor = await isAncestor(
-      Role,
-      reqUser.dataValues.roleId,
+    const reqUserAncestor = await isAncestorCTEWithSequelize(
+      this.sequelize,
+      'roles',
+      reqUser.roleId,
       id,
     );
     if (!reqUserAncestor) {

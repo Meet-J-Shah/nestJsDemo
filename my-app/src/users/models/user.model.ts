@@ -11,8 +11,15 @@ import { Role } from '../../roles/models/role.model';
 
 @Table
 export class User extends Model<User> {
-  @Column({ type: DataType.STRING })
-  name: string;
+  @Column({ type: DataType.STRING, allowNull: false, unique: true })
+  userName: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    unique: true,
+  })
+  email: string;
 
   @Column({ type: DataType.STRING })
   password: string;

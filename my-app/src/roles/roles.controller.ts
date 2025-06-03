@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Controller,
   Get,
@@ -13,52 +14,56 @@ import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/createRole.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RoleIdParamDto } from './dto/roleIdParams.dto';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
 @Controller('roles')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @Permissions('create_role')
   @Post()
   create(@Request() req, @Body() createRoleDto: CreateRoleDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = req.user.userId as number;
-    return this.rolesService.create(createRoleDto, userId);
+    return this.rolesService.create(createRoleDto, req.user);
   }
-  @UseGuards(JwtAuthGuard)
+
+  @Permissions('read_role')
   @Get()
   findAll(@Request() req) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = +req.user.userId;
-    return this.rolesService.findAll(userId);
+    return this.rolesService.findAll(req.user);
   }
-  @UseGuards(JwtAuthGuard)
+
   @Get('/profileV3')
   getProfile(@Request() req) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     return req.user;
   }
-  @UseGuards(JwtAuthGuard)
+
+  @Permissions('read_role')
   @Get(':id')
-  findOne(@Request() req, @Param('id') id: string) {
+  findOne(@Request() req, @Param() params: RoleIdParamDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.rolesService.findOne(+id, +req.user?.userId);
+    return this.rolesService.findOne(params.id, req.user);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Permissions('update_role')
   @Patch(':id')
   update(
     @Request() req,
-    @Param('id') id: string,
+    @Param() params: RoleIdParamDto,
     @Body() updateRoleDto: UpdateRoleDto,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.rolesService.update(+id, updateRoleDto, +req.user?.userId);
+    return this.rolesService.update(params.id, updateRoleDto, req.user);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Permissions('delete_role')
   @Delete(':id')
-  remove(@Request() req, @Param('id') id: string) {
+  remove(@Request() req, @Param() params: RoleIdParamDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.rolesService.remove(+id, +req.user?.userId);
+    return this.rolesService.remove(params.id, req.user);
   }
 }

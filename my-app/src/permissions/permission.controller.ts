@@ -1,64 +1,108 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  //   Patch,
+  Post,
+  Req,
   UseGuards,
-  Request,
 } from '@nestjs/common';
-import { PermissionService } from './permission.service';
-import { CreateRoleDto } from './dto/createPermission.dto';
-import { UpdateRoleDto } from './dto/updatePermission.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-@Controller('roles')
-export class RolesController {
-  constructor(private readonly rolesService: RolesService) {}
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { PermissionService } from './permission.service';
+import { CreateRolePermissionDto } from './dto/createRolePermission.dto';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import type { Request } from 'express';
 
-  @UseGuards(JwtAuthGuard)
+@Controller('permissions')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+export class PermissionController {
+  constructor(private readonly permissionService: PermissionService) {}
+
+  //   @Permissions('assign_permission')
   @Post()
-  create(@Request() req, @Body() createRoleDto: CreateRoleDto) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = +req.user.userId;
-    return this.rolesService.create(createRoleDto, userId);
-  }
-  @UseGuards(JwtAuthGuard)
-  @Get()
-  findAll(@Request() req) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = +req.user.userId;
-    return this.rolesService.findAll(userId);
-  }
-  @UseGuards(JwtAuthGuard)
-  @Get('/profileV3')
-  getProfile(@Request() req) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-    return req.user;
-  }
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  findOne(@Request() req, @Param('id') id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.rolesService.findOne(+id, +req.user?.userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id')
-  update(
-    @Request() req,
-    @Param('id') id: string,
-    @Body() updateRoleDto: UpdateRoleDto,
+  async assignPermissionToRole(
+    @Body() dto: CreateRolePermissionDto,
+    @Req() req: Request & { user: any },
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.rolesService.update(+id, updateRoleDto, +req.user?.userId);
+    // passing roleId of requester from JWT user info
+    return this.permissionService.create(dto, req.user.roleId);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  remove(@Request() req, @Param('id') id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.rolesService.remove(+id, +req.user?.userId);
+  //   @Permissions('read_permission')
+  @Get()
+  async findAll(@Req() req: Request & { user: any }) {
+    return this.permissionService.findAll(req.user.roleId);
+  }
+
+  //   @Permissions('read_permission')
+  @Get('assigned')
+  async findAllConnected(@Req() req: Request & { user: any }) {
+    return this.permissionService.findAllConnected(req.user.roleId);
+  }
+
+  //   @Permissions('read_permission')
+  @Get('role/:id')
+  async findByRoleId(
+    @Param('id') roleId: number,
+    @Req() req: Request & { user: any },
+  ) {
+    return this.permissionService.findOneByRole(roleId, req.user.roleId);
+  }
+
+  //   @Permissions('read_permission')
+  @Get('permission/:id')
+  async findByPermissionId(
+    @Param('id') permissionId: number,
+    @Req() req: Request & { user: any },
+  ) {
+    return this.permissionService.findOneByPermission(
+      permissionId,
+      req.user.roleId,
+    );
+  }
+
+  //   @Permissions('read_permission')
+  @Get(':key1/:key2')
+  async findOneById(
+    @Param('key1') roleId: number,
+    @Param('key2') permissionId: number,
+    @Req() req: Request & { user: any },
+  ) {
+    return this.permissionService.findOneById(
+      roleId,
+      permissionId,
+      req.user.roleId,
+    );
+  }
+
+  //   @Permissions('update_permission')
+  //   @Patch(':key1/:key2')
+  //   async update(
+  //     @Param('key1') roleId: number,
+  //     @Param('key2') permissionId: number,
+  //     @Body() dto: CreateRolePermissionDto,
+  //     @Req() req: Request & { user: any },
+  //   ) {
+  //     return this.permissionService.update(
+  //       roleId,
+  //       permissionId,
+  //       dto,
+  //       req.user.roleId,
+  //     );
+  //   }
+
+  //   @Permissions('delete_permission')
+  @Delete(':key1/:key2')
+  async remove(
+    @Param('key1') roleId: number,
+    @Param('key2') permissionId: number,
+    @Req() req: Request & { user: any },
+  ) {
+    return this.permissionService.remove(roleId, permissionId, req.user.roleId);
   }
 }
