@@ -9,8 +9,13 @@ import {
 } from 'sequelize-typescript';
 import { Role } from '../../roles/models/role.model';
 
-@Table
+@Table({
+  // timestamps: true, // enable createdAt and updatedAt
+  underscored: true, // use snake_case column names
+  paranoid: true,
+})
 export class User extends Model<User> {
+  [x: string]: any;
   @Column({ type: DataType.STRING, allowNull: false, unique: true })
   userName: string;
 

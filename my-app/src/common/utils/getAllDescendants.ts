@@ -18,8 +18,7 @@ export async function getAllDescendants<T extends Model & WithHierarchyKeys>(
   for (const child of children) {
     result.push(child);
     if (child.id !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      await getAllDescendants(model, child.dataValues.id, result);
+      await getAllDescendants(model, child.get('id'), result);
     }
   }
 
@@ -73,13 +72,13 @@ export async function isAncestorCTEWithSequelize(
 
   const query = `
     WITH RECURSIVE parent_chain AS (
-      SELECT id, parentId
+      SELECT id, parent_id
       FROM ${tableName}
       WHERE id = :descendantId
       UNION ALL
-      SELECT t.id, t.parentId
+      SELECT t.id, t.parent_id
       FROM ${tableName} t
-      INNER JOIN parent_chain pc ON pc.parentId = t.id
+      INNER JOIN parent_chain pc ON pc.parent_id = t.id
     )
     SELECT 1 FROM parent_chain WHERE id = :ancestorId LIMIT 1;
   `;
@@ -106,26 +105,50 @@ export async function getAncestryPath(
   //     depth: number;
   //   }[]
   // >
-  const result = await sequelize.query(
-    `
-      WITH RECURSIVE ancestry AS (
-        SELECT id, name, parentId, CAST(id AS CHAR) AS path, 0 AS depth
-        FROM ${tableName}
-        WHERE id = :startId
-
-        UNION ALL
-
-        SELECT u.id, u.name, u.parentId, CONCAT(u.id, '/', a.path), a.depth + 1
-        FROM ${tableName} u
-        INNER JOIN ancestry a ON a.parentId = u.id
-      )
-      SELECT * FROM ancestry ORDER BY depth;
-      `,
-    {
-      replacements: { startId: userId },
-      type: QueryTypes.SELECT,
-    },
-  );
+  let result;
+  if (tableName == 'users') {
+    result = await sequelize.query(
+      `
+        WITH RECURSIVE ancestry AS (
+          SELECT id, user_name, parent_id, CAST(id AS CHAR) AS path, 0 AS depth
+          FROM ${tableName}
+          WHERE id = :startId
+  
+          UNION ALL
+  
+          SELECT u.id, u.user_name, u.parent_id, CONCAT(u.id, '/', a.path), a.depth + 1
+          FROM ${tableName} u
+          INNER JOIN ancestry a ON a.parent_id = u.id
+        )
+        SELECT * FROM ancestry ORDER BY depth;
+        `,
+      {
+        replacements: { startId: userId },
+        type: QueryTypes.SELECT,
+      },
+    );
+  } else {
+    result = await sequelize.query(
+      `
+        WITH RECURSIVE ancestry AS (
+          SELECT id, name, parent_id, CAST(id AS CHAR) AS path, 0 AS depth
+          FROM ${tableName}
+          WHERE id = :startId
+  
+          UNION ALL
+  
+          SELECT u.id, u.name, u.parent_id, CONCAT(u.id, '/', a.path), a.depth + 1
+          FROM ${tableName} u
+          INNER JOIN ancestry a ON a.parent_id = u.id
+        )
+        SELECT * FROM ancestry ORDER BY depth;
+        `,
+      {
+        replacements: { startId: userId },
+        type: QueryTypes.SELECT,
+      },
+    );
+  }
 
   // return result as {
   //   userId: number;

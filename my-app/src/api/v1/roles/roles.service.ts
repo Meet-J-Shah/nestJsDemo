@@ -30,16 +30,15 @@ export class RolesService {
     const userRoleId = reqUser.roleId;
     const ifExist = await Role.findOne({ where: { name: createRoleDto.name } });
     if (ifExist) {
-      throw new BadRequestException(
-        'Role With This name Already Exist in The Db',
-      );
+      throw new BadRequestException('role.error.exists');
     }
     if (createRoleDto.parentId) {
       const parentRole = await this.roleModel.findByPk(createRoleDto.parentId);
       if (!parentRole) {
-        throw new NotFoundException(
-          `Parent role with id ${createRoleDto.parentId} not found`,
-        );
+        throw new NotFoundException({
+          message: 'role.error.parentNotFound',
+          args: { id: createRoleDto.parentId },
+        });
       }
 
       // Check if user has permission to use this parent role
@@ -51,9 +50,7 @@ export class RolesService {
       );
 
       if (!userCanAssignParent && userRoleId !== createRoleDto.parentId) {
-        throw new ForbiddenException(
-          "You don't have permission to use this parent role",
-        );
+        throw new ForbiddenException('role.error.noModifyPermissionParent');
       }
     }
 
@@ -63,7 +60,7 @@ export class RolesService {
       parentId: createRoleDto.parentId ?? userRoleId, // Default to user role if none provided
     } as CreationAttributes<Role>);
 
-    return this.roleModel.findByPk(+newRole.dataValues.id);
+    return this.roleModel.findByPk(newRole.get('id') as number);
   }
 
   async findAll(reqUser: reqUser) {
@@ -74,17 +71,20 @@ export class RolesService {
       });
 
       if (!role) return null;
-
+      const roleJSON = role.toJSON();
       // Recursively fetch children
-      if (role.children && role.children.length > 0) {
+      if (roleJSON.children && roleJSON.children.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        role.children = await Promise.all(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-          role.children.map((child: any) => getUserWithAllChildren(child.id)),
+        roleJSON.children = await Promise.all(
+          // eslint-disable-next-line, @typescript-eslint/no-unsafe-member-access
+          roleJSON.children.map((child: any) =>
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+            getUserWithAllChildren(child.id),
+          ),
         );
       }
 
-      return role;
+      return roleJSON;
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const allChildren = await getUserWithAllChildren(reqUser.roleId);
@@ -95,18 +95,19 @@ export class RolesService {
   async findOne(id: number, reqUser: reqUser) {
     const role = await this.roleModel.findByPk(id);
     if (!role) {
-      throw new NotFoundException(`Role with id ${id} not found`);
+      throw new NotFoundException({
+        message: 'role.error.notFound',
+        args: { id },
+      });
     }
     const creatorParent = await isAncestorCTEWithSequelize(
       this.sequelize,
       'users',
       reqUser.userId,
-      role.dataValues.creatorId,
+      role.get('creatorId'),
     );
     if (!creatorParent) {
-      throw new ForbiddenException(
-        `You don't have permission to view this role`,
-      );
+      throw new ForbiddenException('role.error.noViewPermission');
     }
 
     const reqUserAncestor = await isAncestorCTEWithSequelize(
@@ -129,24 +130,23 @@ export class RolesService {
       },
     });
     if (ifExist) {
-      throw new BadRequestException(
-        'Role With This name Already Exist in The Db',
-      );
+      throw new BadRequestException('role.error.exists');
     }
     if (!role) {
-      throw new NotFoundException(`Role with id ${id} not found`);
+      throw new NotFoundException({
+        message: 'role.error.notFound',
+        args: { id },
+      });
     }
 
     const creatorParent = await isAncestorCTEWithSequelize(
       this.sequelize,
       'users',
       reqUser.userId,
-      role.dataValues.creatorId,
+      role.get('creatorId'),
     );
     if (!creatorParent) {
-      throw new ForbiddenException(
-        `You don't have permission to modify this role`,
-      );
+      throw new ForbiddenException('role.error.noModifyPermission');
     }
     if (!updateRoleDto.parentId) {
       await role.update(updateRoleDto);
@@ -187,32 +187,31 @@ export class RolesService {
       updateRoleDto.parentId,
     );
     if (valid) {
-      console.log('Hierarchy conditions satisfied.');
+      // console.log('Hierarchy conditions satisfied.');
       await role.update(updateRoleDto);
       return role;
     } else {
-      console.log('Hierarchy conditions failed.');
-      throw new ForbiddenException(
-        'Hierarchy validation failed. Operation not permitted.',
-      );
+      // console.log('Hierarchy conditions failed.');
+      throw new ForbiddenException('role.error.hierarchyViolation');
     }
   }
 
   async remove(id: number, reqUser: reqUser) {
     const role = await this.roleModel.findByPk(id);
     if (!role) {
-      throw new NotFoundException(`Role with id ${id} not found`);
+      throw new NotFoundException({
+        message: 'role.error.notFound',
+        args: { id },
+      });
     }
     const creatorParent = await isAncestorCTEWithSequelize(
       this.sequelize,
       'users',
       reqUser.userId,
-      role.dataValues.creatorId,
+      role.get('creatorId'),
     );
     if (!creatorParent) {
-      throw new ForbiddenException(
-        "You can't delete this role — not in your user hierarchy",
-      );
+      throw new ForbiddenException('role.error.notUserChild');
     }
     const reqUserAncestor = await isAncestorCTEWithSequelize(
       this.sequelize,
@@ -221,15 +220,11 @@ export class RolesService {
       id,
     );
     if (!reqUserAncestor) {
-      throw new ForbiddenException(
-        "Sorry, You don't have acess to delete this role",
-      );
+      throw new ForbiddenException('role.error.noDeletePermission');
     }
     const users = await User.findOne({ where: { roleId: id } });
     if (users) {
-      throw new ForbiddenException(
-        "Users asscoaite with this role you can't delete it",
-      );
+      throw new ForbiddenException('role.error.associatedUsers');
     }
     await role.destroy();
     return `role deleted having id:- ${id}`;

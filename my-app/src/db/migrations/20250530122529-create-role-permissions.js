@@ -10,9 +10,7 @@ module.exports = {
           model: 'roles',
           key: 'id',
         },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-        primaryKey: true,
+        // onDelete: 'CASCADE',
       },
       permission_id: {
         type: Sequelize.INTEGER,
@@ -21,23 +19,7 @@ module.exports = {
           model: 'permissions',
           key: 'id',
         },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-        primaryKey: true,
-      },
-      created_at: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-      },
-      updated_at: {
-        allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-      },
-      deleted_at: {
-        allowNull: true, // must be nullable
-        type: Sequelize.DATE,
+        // onDelete: 'CASCADE',
       },
     });
   },

@@ -41,14 +41,10 @@ export class UsersService {
       },
     });
     if (existingUser) {
-      throw new BadRequestException(
-        'Sorry, User Already Exist with this username or Email',
-      );
+      throw new BadRequestException('user.error.exists');
     }
     if (reqUser.roleId === createUserDto.roleId) {
-      throw new ForbiddenException(
-        "Sorry, you can't create a user with your own role",
-      );
+      throw new ForbiddenException('user.error.sameRole');
     }
 
     const userRole = await isAncestorCTEWithSequelize(
@@ -59,17 +55,16 @@ export class UsersService {
     );
 
     if (!userRole && reqUser.roleId == createUserDto.roleId) {
-      throw new ForbiddenException(
-        "You can't assign a role outside your hierarchy",
-      );
+      throw new ForbiddenException('user.error.hierarchyViolation');
     }
 
     if (createUserDto.parentId) {
       const parentRole = await this.userModel.findByPk(createUserDto.parentId);
       if (!parentRole) {
-        throw new NotFoundException(
-          `Parent User with id ${createUserDto.parentId} not found`,
-        );
+        throw new NotFoundException({
+          message: 'user.error.parentNotFound',
+          args: { id: createUserDto.parentId },
+        });
       }
 
       // Check if user has permission to use this parent user
@@ -81,9 +76,7 @@ export class UsersService {
       );
 
       if (!userCanAssignParent) {
-        throw new ForbiddenException(
-          "You don't have permission to use this parent as user",
-        );
+        throw new ForbiddenException('user.error.noParentPermission');
       }
     }
 
@@ -118,16 +111,19 @@ export class UsersService {
           args: { id: userId },
         });
       }
+      const userJSON = user.toJSON();
       // Recursively fetch children
-      if (user.children && user.children.length > 0) {
+      if (userJSON.children && userJSON.children.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        user.children = await Promise.all(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-          user.children.map((child: any) => getUserWithAllChildren(child.id)),
+        userJSON.children = await Promise.all(
+          userJSON.children.map((child: any) =>
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+            getUserWithAllChildren(child.id),
+          ),
         );
       }
 
-      return user;
+      return userJSON;
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const allChildren = await getUserWithAllChildren(reqUser.userId);
@@ -173,11 +169,10 @@ export class UsersService {
     // const userParent = await isAncestor(User, userId, id);
     const hierarchy = await getAncestryPath(this.sequelize, 'users', id);
     const idIndex = hierarchy.indexOf(id);
-    const parentIndex = hierarchy.indexOf(user.parentId);
+    const parentIndex = hierarchy.indexOf(user.get('parentId'));
     const requestUserIdIndex = hierarchy.indexOf(reqUser.userId);
     const userParent = requestUserIdIndex < idIndex;
     const userParent2 = requestUserIdIndex < parentIndex;
-
     // const userParent = await isAncestorCTEWithSequelize(
     //   this.sequelize,
     //   'users',
@@ -255,6 +250,7 @@ export class UsersService {
     if (!userParent) {
       throw new ForbiddenException('user.error.noDeletePermission');
     }
+    await user.destroy();
     return `user is  deleted having id:- ${id}`;
   }
 
@@ -268,13 +264,13 @@ export class UsersService {
       },
     });
 
-    if (!role || !role.dataValues.permissions) {
+    if (!role || !role.get('permissions')) {
       return [];
     }
     const perms: string[] = [];
 
-    role.dataValues.permissions.forEach((element) => {
-      perms.push(element.dataValues.name);
+    role.get('permissions').forEach((element) => {
+      perms.push(element.get('name'));
     });
 
     return perms;

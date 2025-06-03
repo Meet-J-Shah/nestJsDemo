@@ -3,44 +3,41 @@ import {
   Column,
   Table,
   ForeignKey,
-  CreatedAt,
-  UpdatedAt,
-  DeletedAt,
+  DataType,
+  BelongsTo,
 } from 'sequelize-typescript';
 import { Role } from '../../roles/models/role.model';
 import { Permission } from './permission.model';
 
+export interface RolePermissionCreationAttrs {
+  roleId: number;
+  permissionId: number;
+}
+
 @Table({
   tableName: 'role_permissions',
-  paranoid: true,
-  timestamps: true, // Usually join tables don't need timestamps, add if you want
+  timestamps: false, // Optional, depending on your use case
 })
 export class RolePermission extends Model<RolePermission> {
   @ForeignKey(() => Role)
   @Column({
-    type: 'INTEGER',
+    type: DataType.INTEGER,
     allowNull: false,
-    field: 'role_id', // snake_case column name
+    field: 'role_id', // maps property to DB column
   })
-  roleId: number;
+  roleId!: number;
 
   @ForeignKey(() => Permission)
   @Column({
-    type: 'INTEGER',
+    type: DataType.INTEGER,
     allowNull: false,
-    field: 'permission_id', // snake_case column name
+    field: 'permission_id', // maps property to DB column
   })
-  permissionId: number;
+  permissionId!: number;
 
-  @CreatedAt
-  @Column({ field: 'created_at' })
-  declare createdAt: Date;
+  @BelongsTo(() => Role)
+  role!: Role;
 
-  @UpdatedAt
-  @Column({ field: 'updated_at' })
-  declare updatedAt: Date;
-
-  @DeletedAt
-  @Column({ field: 'deleted_at' })
-  declare deletedAt: Date;
+  @BelongsTo(() => Permission)
+  permission!: Permission;
 }

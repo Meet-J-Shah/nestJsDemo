@@ -1,9 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { jwtConstants } from './constants';
 import { User } from 'src/api/v1/users/models/user.model';
-import { reqUser } from 'src/common/interfaces/reqUser.interface';
+// import { reqUser } from 'src/common/interfaces/reqUser.interface';
+import { Role } from '../roles/models/role.model';
+import { Permission } from '../permissions/models/permission.model';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -16,18 +20,46 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-    const reqUser = await User.findByPk(payload.sub);
-    if (!reqUser) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    // Fetch the user with role and permissions
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const user = await User.findByPk(payload.sub, {
+      include: [
+        {
+          model: Role,
+          as: 'role',
+          include: [
+            {
+              model: Permission,
+              as: 'permissions',
+              through: { attributes: [] },
+            },
+          ],
+        },
+      ],
+    });
+
+    // console.log(user?.get('role').get('permissions'));
+    if (!user) {
       throw new NotFoundException(`User with id ${payload.sub} not found`);
     }
-    const user: reqUser = {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      userId: reqUser.dataValues.id,
-      roleId: reqUser.dataValues.roleId,
-      username: reqUser.dataValues.userName,
+    // const formattedUser = user.toJSON(); // --> Way 1
+    // console.log(formattedUser.role.permissions);
+    // console.log(user.get('role').get('permissions'));
+    // Extract permission names
+    const permissions = user.get('role').get('permissions');
+    const perms: string[] = [];
+    permissions.forEach((element) => {
+      perms.push(element.get('name'));
+    });
+    // console.log(
+    //   // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    //   ` User fetched with ID: ${user.id}, Role: ${user.dataValues.role?.dataValues.name}, Permissions: ${perms}`,
+    // );
+    return {
+      userId: user.id,
+      roleId: user.get('roleId'),
+      username: user.get('userName'),
+      permissions: perms, // attach permissions here
     };
-    return user;
   }
 }
