@@ -8,13 +8,17 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import { I18nService } from 'nestjs-i18n';
 // import { UsersService } from '../../api/v1/users/users.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly i18n: I18nService,
+    private readonly reflector: Reflector,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -27,8 +31,16 @@ export class PermissionsGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
+    const lang: string =
+      request.headers['x-custom-lang'] ??
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      request.headers['accept-language']?.split(',')[0] ??
+      'en';
     if (!user) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException(
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        await this.i18n.translate('common.errors.notAuthenticated', { lang }),
+      );
     }
 
     const userPermissions: string[] = user.permissions || [];
@@ -37,7 +49,12 @@ export class PermissionsGuard implements CanActivate {
     );
 
     if (!hasAllPermissions) {
-      throw new ForbiddenException('Insufficient permissions');
+      throw new ForbiddenException(
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        await this.i18n.translate('common.errors.insufficientPermission', {
+          lang,
+        }),
+      );
     }
 
     return true;

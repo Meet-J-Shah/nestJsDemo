@@ -6,7 +6,9 @@
     "USER_CREATED": "User created successfully"
   },
   "errors": {
-    "not_authorized": "Not authorized",
+    "notAuthorized": "Not authorized",
+    "notAuthenticated": "User not authenticated",
+    "insufficientPermission": "User has Insufficient permissions",
     "notSuperAdmin": "Only Super Admin can perform this action"
   }
 }

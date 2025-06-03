@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateBookDto } from './dto/createBook.dto';
 import { UpdateBookDto } from './dto/updateBook.dto';
@@ -15,9 +19,12 @@ export class BooksService {
 
   async create(reqUser: reqUser, createBookDto: CreateBookDto) {
     if (reqUser.roleId != 1 && createBookDto.authorId) {
-      throw new ForbiddenException('Only Super Admin can Add author');
+      throw new ForbiddenException('book.error.notAuthorChange');
     }
-
+    const ifExist = await Book.findOne({ where: { name: createBookDto.name } });
+    if (ifExist) {
+      throw new BadRequestException('book.error.exists');
+    }
     const book = await this.bookModel.create({
       name: createBookDto.name,
       authorId: createBookDto.authorId || reqUser.userId,
@@ -57,7 +64,7 @@ export class BooksService {
 
   async update(book: Book, roleId: number, updateBookDto: UpdateBookDto) {
     if (roleId != 1 && updateBookDto.authorId) {
-      throw new ForbiddenException('Only Super Admin can change author');
+      throw new ForbiddenException('book.error.notAuthorChange');
     }
     await book.update(updateBookDto);
     return book;
