@@ -11,6 +11,7 @@ import {
 import { User } from '../../users/models/user.model';
 import { Permission } from 'src/api/v1/permissions/models/permission.model';
 import { RolePermission } from 'src/api/v1/permissions/models/rolePermission.model';
+import { BelongsToManyAddAssociationsMixin } from 'sequelize';
 
 @Table({
   timestamps: true, // enable createdAt and updatedAt
@@ -51,4 +52,6 @@ export class Role extends Model<Role> {
     timestamps: false,
   })
   permissions: Permission[];
+  public addPermissions!: BelongsToManyAddAssociationsMixin<Permission, number>;
+  public addPermission!: BelongsToManyAddAssociationsMixin<Permission, number>; // optional if used
 }

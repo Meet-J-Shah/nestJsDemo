@@ -9,6 +9,7 @@ import {
   Patch,
   //   Patch,
   Post,
+  Put,
   // Req,
   UseGuards,
 } from '@nestjs/common';
@@ -84,6 +85,29 @@ export class PermissionController {
     console.log('🚀 DTO received at controller:', dto);
     return this.permissionService.createRolePermission(dto);
   }
+  // ✅ Edit Permissions for a Role
+  @Put('role/:id')
+  async updatePermissionsOfRole(
+    @Param('id') roleId: number,
+    @Body('permissionIds') permissionIds: number[],
+  ) {
+    return this.permissionService.editRolePermissionWithRole(
+      roleId,
+      permissionIds,
+    );
+  }
+
+  // ✅ Edit Roles for a Permission
+  @Put('permission/:id')
+  async updateRolesOfPermission(
+    @Param('id') permissionId: number,
+    @Body('roleIds') roleIds: number[],
+  ) {
+    return this.permissionService.editRolePermissionWithPermission(
+      permissionId,
+      roleIds,
+    );
+  }
   // @ResponseMessage('user.deleted')
   // @Get(':key1/:key2')
   // async findOneById(
@@ -115,7 +139,6 @@ export class PermissionController {
 
   @ResponseMessage('permission.deleted2')
   @Delete('role_permission/:roleId/:permissionId')
-  @ResponseMessage('permission.deleted2')
   delete(@Param() params: CreateRolePermissionDto) {
     return this.permissionService.removeRolePermission(
       params.roleId,

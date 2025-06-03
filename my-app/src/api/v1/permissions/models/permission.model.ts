@@ -8,6 +8,14 @@ import {
 } from 'sequelize-typescript';
 import { Role } from '../../roles/models/role.model';
 import { RolePermission } from './rolePermission.model';
+import {
+  BelongsToManyAddAssociationMixin,
+  BelongsToManyAddAssociationsMixin,
+  BelongsToManyGetAssociationsMixin,
+  BelongsToManyRemoveAssociationMixin,
+  BelongsToManyRemoveAssociationsMixin,
+  BelongsToManySetAssociationsMixin,
+} from 'sequelize/types/associations/belongs-to-many';
 
 @Table({
   tableName: 'permissions',
@@ -33,4 +41,10 @@ export class Permission extends Model<Permission> {
     timestamps: false,
   })
   roles: Role[];
+  public addRole!: BelongsToManyAddAssociationMixin<Role, number>;
+  public addRoles!: BelongsToManyAddAssociationsMixin<Role, number>;
+  public getRoles!: BelongsToManyGetAssociationsMixin<Role>;
+  public setRoles!: BelongsToManySetAssociationsMixin<Role, number>;
+  public removeRole!: BelongsToManyRemoveAssociationMixin<Role, number>;
+  public removeRoles!: BelongsToManyRemoveAssociationsMixin<Role, number>;
 }

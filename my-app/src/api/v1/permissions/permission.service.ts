@@ -222,17 +222,109 @@ export class PermissionService {
     return rolePermission;
   }
 
-  // async addRolePermissionWithRole(roleId: number, permissionIds: number[]) {
-  //   const role = await Role.findByPk(roleId);
+  async editRolePermissionWithRole(roleId: number, permissionIds: number[]) {
+    const role = await Role.findByPk(roleId, { include: [Permission] });
+    if (!role) {
+      throw new NotFoundException('Requested ID of role does not exist ');
+    }
+    const permissions = await Permission.findAll({
+      where: { id: permissionIds },
+    });
+    if (permissionIds.length != permissions.length) {
+      throw new NotFoundException(
+        'Requested ID of permissions does not exist ',
+      );
+    }
+    // Sequelize will upsert them into role_permissions automatically
+    // await role.addPermissions(permissions);
+    const rolePermissions = await RolePermission.bulkCreate(
+      permissionIds.map((permissionId) => ({
+        permissionId: permissionId,
+        roleId: roleId,
+        role_id: roleId,
+        permission_id: permissionId,
+      })) as any[],
+      {
+        updateOnDuplicate: ['permissionId', 'roleId'], // only if you have additional fields
+        fields: ['roleId', 'permissionId'],
+      },
+    );
+    return rolePermissions;
+  }
+  async editRolePermissionWithPermission(
+    permissionId: number,
+    roleIds: number[],
+  ) {
+    // const permission = await Permission.findOne({
+    //   where: { id: permissionId },
+    //   include: [Role],
+    //   raw: false,
+    //   nest: true,
+    // });
+    // if (!permission) {
+    //   throw new NotFoundException('Requested ID of permission does not exist ');
+    // }
+    // const roles = await Role.findAll({
+    //   where: { id: roleIds },
+    //   raw: false,
+    // });
+    // if (roleIds.length != roles.length) {
+    //   throw new NotFoundException(
+    //     'Requested ID of permissions does not exist ',
+    //   );
+    // }
+    // console.log('Permission class has addRoles:', typeof permission?.addRoles);
+    // console.log(typeof permission.get('addRoles')); // should be 'function'
+    // console.log(
+    //   'Permission instance methods:',
+    //   Object.getOwnPropertyNames(Object.getPrototypeOf(permission)),
+    // );
+    // console.log(permission);
+    // if (!(permission instanceof Permission)) {
+    //   throw new Error('Not a Sequelize instance');
+    // }
+    // console.log('mfdj');
+    // console.log(permission instanceof Permission); // should log true
+    // console.log('Is Sequelize instance:', permission instanceof Permission);
+    // console.log(
+    //   'addRoles is function:',
+    //   typeof permission.addRoles === 'function',
+    // );
+    // // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    // console.log('raw setting:', permission['_options']?.raw);
+    // console.log(roles);
+    // // Sequelize will upsert them into role_permissions automatically
+    // await permission.reload();
+    // await permission.setRoles(roles);
+    ////////////////////////////////////////////
+    const permission = await Permission.findOne({
+      where: { id: permissionId },
+      include: [Role],
+      raw: false, // Optional, safe to remove
+      nest: true, // just in case
+    });
+    if (!permission) throw new NotFoundException();
+    const roles = await Role.findAll({ where: { id: roleIds } });
+    if (roleIds.length != roles.length) {
+      throw new NotFoundException(
+        'Requested ID of permissions does not exist ',
+      );
+    }
+    // await permission.$set('roles', roles); // ✅ avoids .setRoles not found
+    ///////////////////////////////////////
 
-  //   const permissions = await Permission.findAll({
-  //     where: { id: permissionIds },
-  //   });
-
-  //   // Sequelize will upsert them into role_permissions automatically
-  //   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  //   await role.addPermissions(permissions);
-  // }
+    await RolePermission.bulkCreate(
+      roleIds.map((roleId) => ({
+        permissionId: permissionId,
+        roleId: roleId,
+        role_id: roleId,
+        permission_id: permissionId,
+      })) as any[],
+      {
+        updateOnDuplicate: ['permissionId', 'roleId'], // only if you have additional fields
+      },
+    );
+  }
   async removeRolePermission(roleId: number, permissionId: number) {
     const rolePermission = await RolePermission.findOne({
       where: { roleId: roleId, permissionId: permissionId },
