@@ -7,7 +7,7 @@ import {
   DataType,
 } from 'sequelize-typescript';
 import { Role } from '../../roles/models/role.model';
-// import { RolePermission } from './rolePermission.model';
+import { RolePermission } from './rolePermission.model';
 
 @Table({
   tableName: 'permissions',
@@ -26,7 +26,8 @@ export class Permission extends Model<Permission> {
   // @BelongsToMany(() => Role, () => RolePermission)
   // roles: Role[];
   @BelongsToMany(() => Role, {
-    through: 'role_permissions', // Join table name
+    // through: 'role_permissions', // Join table name
+    through: () => RolePermission,
     foreignKey: 'permission_id',
     otherKey: 'role_id',
     timestamps: false,

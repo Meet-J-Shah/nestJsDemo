@@ -1,10 +1,13 @@
-import { IsNumber, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsInt, Min } from 'class-validator';
 
 export class CreateRolePermissionDto {
-  @IsNumber()
-  @Min(2)
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   roleId: number;
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   @Min(1)
   permissionId: number;
 }

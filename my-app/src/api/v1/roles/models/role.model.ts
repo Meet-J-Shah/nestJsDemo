@@ -10,7 +10,7 @@ import {
 } from 'sequelize-typescript';
 import { User } from '../../users/models/user.model';
 import { Permission } from 'src/api/v1/permissions/models/permission.model';
-// import { RolePermission } from 'src/api/v1/permissions/models/rolePermission.model';
+import { RolePermission } from 'src/api/v1/permissions/models/rolePermission.model';
 
 @Table({
   timestamps: true, // enable createdAt and updatedAt
@@ -44,7 +44,8 @@ export class Role extends Model<Role> {
   children: Role[];
 
   @BelongsToMany(() => Permission, {
-    through: 'role_permissions',
+    // through: 'role_permissions',
+    through: () => RolePermission,
     foreignKey: 'role_id',
     otherKey: 'permission_id',
     timestamps: false,

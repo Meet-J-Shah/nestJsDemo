@@ -38,15 +38,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ],
     });
 
+    // console.log(user?.get('role').get('permissions'));
     if (!user) {
       throw new NotFoundException(`User with id ${payload.sub} not found`);
     }
-
+    // const formattedUser = user.toJSON(); // --> Way 1
+    // console.log(formattedUser.role.permissions);
+    // console.log(user.get('role').get('permissions'));
     // Extract permission names
-    const permissions = user.dataValues.role.dataValues.permissions;
+    const permissions = user.get('role').get('permissions');
     const perms: string[] = [];
     permissions.forEach((element) => {
-      perms.push(element.dataValues.name);
+      perms.push(element.get('name'));
     });
     // console.log(
     //   // eslint-disable-next-line @typescript-eslint/restrict-template-expressions

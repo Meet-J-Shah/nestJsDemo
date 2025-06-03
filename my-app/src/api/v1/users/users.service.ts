@@ -111,16 +111,19 @@ export class UsersService {
           args: { id: userId },
         });
       }
+      const userJSON = user.toJSON();
       // Recursively fetch children
-      if (user.children && user.children.length > 0) {
+      if (userJSON.children && userJSON.children.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        user.children = await Promise.all(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-          user.children.map((child: any) => getUserWithAllChildren(child.id)),
+        userJSON.children = await Promise.all(
+          userJSON.children.map((child: any) =>
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+            getUserWithAllChildren(child.id),
+          ),
         );
       }
 
-      return user;
+      return userJSON;
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const allChildren = await getUserWithAllChildren(reqUser.userId);
@@ -166,11 +169,10 @@ export class UsersService {
     // const userParent = await isAncestor(User, userId, id);
     const hierarchy = await getAncestryPath(this.sequelize, 'users', id);
     const idIndex = hierarchy.indexOf(id);
-    const parentIndex = hierarchy.indexOf(user.parentId);
+    const parentIndex = hierarchy.indexOf(user.dataValues.parentId);
     const requestUserIdIndex = hierarchy.indexOf(reqUser.userId);
     const userParent = requestUserIdIndex < idIndex;
     const userParent2 = requestUserIdIndex < parentIndex;
-
     // const userParent = await isAncestorCTEWithSequelize(
     //   this.sequelize,
     //   'users',
@@ -248,6 +250,7 @@ export class UsersService {
     if (!userParent) {
       throw new ForbiddenException('user.error.noDeletePermission');
     }
+    await user.destroy();
     return `user is  deleted having id:- ${id}`;
   }
 

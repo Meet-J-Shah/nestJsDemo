@@ -1,0 +1,11 @@
+{
+  "fetchedByRole": "All Permission With Requested Role Id Fetched successfully",
+  "fetchedByPermission": "All Roles With Requested Permission Id Fetched successfully",
+  "allFetched": "All Permissions fetched successfully",
+  "created": "Permission created successfully",
+  "updated": "Permission with Requested Id updated successfully",
+  "deleted": "Permission with Requested Id deleted successfully",
+  "created2": "Requested Role & Permission added in role_permission successfully",
+  "deleted2": "Requested Role & Permission deleted from role_permission successfully",
+  "error.exists": "Sorry, Permission already exists with this name"
+}
