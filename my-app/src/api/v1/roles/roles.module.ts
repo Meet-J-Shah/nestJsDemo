@@ -3,9 +3,10 @@ import { RolesService } from './roles.service';
 import { RolesController } from './roles.controller';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Role } from './models/role.model';
+import { UsersModule } from 'src/api/v1/users/users.module';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Role])],
+  imports: [UsersModule, SequelizeModule.forFeature([Role])],
   controllers: [RolesController],
   providers: [RolesService],
 })

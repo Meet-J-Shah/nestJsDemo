@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Permission } from './models/permission.model';
-import { Role } from 'src/roles/models/role.model';
+import { Role } from 'src/api/v1/roles/models/role.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreationAttributes } from 'sequelize';
 import { RolePermission } from './models/rolePermission.model';

@@ -9,8 +9,8 @@ import {
   BelongsToMany,
 } from 'sequelize-typescript';
 import { User } from '../../users/models/user.model';
-import { Permission } from 'src/permissions/models/permission.model';
-import { RolePermission } from 'src/permissions/models/rolePermission.model';
+import { Permission } from 'src/api/v1/permissions/models/permission.model';
+import { RolePermission } from 'src/api/v1/permissions/models/rolePermission.model';
 
 @Table({
   timestamps: true, // enable createdAt and updatedAt
