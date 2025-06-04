@@ -13,6 +13,7 @@ import { CreatePermissionDto } from './dto/createPermission.dto';
 import { UpdatePermissionDto } from './dto/updatePermission.dto';
 import { CreationAttributes } from 'sequelize/types/model';
 import { Sequelize } from 'sequelize-typescript';
+import { Op } from 'sequelize';
 // import { QueryTypes } from 'sequelize';
 
 @Injectable()
@@ -59,9 +60,20 @@ export class PermissionService {
     const permission = await this.permissionModel.findByPk(permissionId);
     if (!permission) {
       throw new NotFoundException({
-        message: 'role.error.notFound',
+        message: 'permission.error.notFound',
         args: { id: permissionId },
       });
+    }
+    const ifExist = await this.permissionModel.findOne({
+      where: {
+        [Op.and]: [
+          { name: updatePermissionData.name },
+          { id: { [Op.not]: permissionId } },
+        ],
+      },
+    });
+    if (ifExist) {
+      throw new BadRequestException('permission.error.exists');
     }
 
     await permission.update(updatePermissionData);

@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  // Req,
+  Request,
+  Res,
+  // UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local.auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -19,8 +28,10 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('logout')
-  logout(@Request() req) {
-    return req.logout();
+  logout(@Res() res) {
+    return res
+      .status(200)
+      .json({ message: 'Logged out — just discard token on client' });
   }
 
   @UseGuards(JwtAuthGuard)

@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   // Req,
+  // Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -34,7 +35,11 @@ export class PermissionController {
   async findAll() {
     return this.permissionService.findAll();
   }
-
+  @ResponseMessage('permission.fetched')
+  @Get('assigned') //--> Not Possible If you Don't create a custom model for it..
+  async findAllConnected() {
+    return this.permissionService.findAllConnected();
+  }
   @ResponseMessage('permission.fetched')
   @Get(':id')
   async findPermission(@Param() params: IdParamDto) {
@@ -64,11 +69,6 @@ export class PermissionController {
     return this.permissionService.deletePermission(params.id);
   }
 
-  // @ResponseMessage('user.deleted')
-  // @Get('assigned')  --> Not Possible If you Don't create a custom model for it..
-  // async findAllConnected(@Req() req: Request & { user: any }) {
-  //   return this.permissionService.findAllConnected(req.user.roleId);
-  // }
   @ResponseMessage('permission.fetchedByRole')
   @Get('role/:id')
   async findByRoleId(@Param('id') roleId: number) {
@@ -85,7 +85,7 @@ export class PermissionController {
     console.log('🚀 DTO received at controller:', dto);
     return this.permissionService.createRolePermission(dto);
   }
-  // ✅ Edit Permissions for a Role
+  //  Edit Permissions for a Role
   @Put('role/:id')
   async updatePermissionsOfRole(
     @Param('id') roleId: number,
@@ -97,7 +97,7 @@ export class PermissionController {
     );
   }
 
-  // ✅ Edit Roles for a Permission
+  //  Edit Roles for a Permission
   @Put('permission/:id')
   async updateRolesOfPermission(
     @Param('id') permissionId: number,

@@ -53,8 +53,7 @@ export class UsersService {
       reqUser.roleId,
       createUserDto.roleId,
     );
-
-    if (!userRole && reqUser.roleId == createUserDto.roleId) {
+    if (!userRole) {
       throw new ForbiddenException('user.error.hierarchyViolation');
     }
 

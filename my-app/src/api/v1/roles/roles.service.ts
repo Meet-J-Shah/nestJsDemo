@@ -117,7 +117,7 @@ export class RolesService {
       id,
     );
     if (!reqUserAncestor) {
-      throw new ForbiddenException(`You don't have access to view this role`);
+      throw new ForbiddenException('role.error.hierarchyViolation');
     }
     return role;
   }

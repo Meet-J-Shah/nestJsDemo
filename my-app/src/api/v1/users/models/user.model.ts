@@ -15,7 +15,7 @@ import { Role } from '../../roles/models/role.model';
   paranoid: true,
 })
 export class User extends Model<User> {
-  [x: string]: any;
+  // [x: string]: any;
   @Column({ type: DataType.STRING, allowNull: false, unique: true })
   userName: string;
 
