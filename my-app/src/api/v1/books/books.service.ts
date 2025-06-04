@@ -2,13 +2,15 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateBookDto } from './dto/createBook.dto';
 import { UpdateBookDto } from './dto/updateBook.dto';
 import { Book } from './models/book.model';
 import { reqUser } from '../../../common/interfaces/reqUser.interface';
-import { CreationAttributes } from 'sequelize';
+import { CreationAttributes, Op } from 'sequelize';
+import { User } from '../users/models/user.model';
 type BookCreationAttrs = CreationAttributes<Book>;
 @Injectable()
 export class BooksService {
@@ -24,6 +26,10 @@ export class BooksService {
     const ifExist = await Book.findOne({ where: { name: createBookDto.name } });
     if (ifExist) {
       throw new BadRequestException('book.error.exists');
+    }
+    if (createBookDto.authorId) {
+      const author = await User.findByPk(createBookDto.authorId);
+      if (!author) throw new NotFoundException('book.error.notFoundAuthor');
     }
     const book = await this.bookModel.create({
       name: createBookDto.name,
@@ -65,6 +71,20 @@ export class BooksService {
   async update(book: Book, roleId: number, updateBookDto: UpdateBookDto) {
     if (roleId != 1 && updateBookDto.authorId) {
       throw new ForbiddenException('book.error.notAuthorChange');
+    }
+
+    if (updateBookDto.authorId) {
+      const author = await User.findByPk(updateBookDto.authorId);
+      if (!author) throw new NotFoundException('book.error.notFoundAuthor');
+    }
+    const ifExist = await this.bookModel.findOne({
+      where: {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        [Op.and]: [{ name: updateBookDto.name }, { id: { [Op.not]: book.id } }],
+      },
+    });
+    if (ifExist) {
+      throw new BadRequestException('book.error.exists');
     }
     await book.update(updateBookDto);
     return book;
