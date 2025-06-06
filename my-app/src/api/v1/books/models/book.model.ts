@@ -20,6 +20,6 @@ export class Book extends Model<Book> {
   })
   name: string;
   @ForeignKey(() => User)
-  @Column
-  authorId: number;
+  @Column({ type: DataType.INTEGER, allowNull: true })
+  authorId: number | null;
 }

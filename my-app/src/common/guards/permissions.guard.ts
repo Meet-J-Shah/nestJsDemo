@@ -9,6 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { I18nService } from 'nestjs-i18n';
+import { Role } from 'src/api/v1/roles/models/role.model';
 // import { UsersService } from '../../api/v1/users/users.service';
 
 @Injectable()
@@ -42,7 +43,12 @@ export class PermissionsGuard implements CanActivate {
         await this.i18n.translate('common.errors.notAuthenticated', { lang }),
       );
     }
-
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const role = await Role.findByPk(user.roleId);
+    const roleName = role?.get('name'); // --> final fall back to pass admin
+    if (roleName == 'SuperAdmin') {
+      return true;
+    }
     const userPermissions: string[] = user.permissions || [];
     const hasAllPermissions = requiredPermissions.every((perm) =>
       userPermissions.includes(perm),

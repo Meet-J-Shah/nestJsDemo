@@ -8,6 +8,9 @@ module.exports = {
     database: process.env.DB_NAME || 'test_db',
     host: process.env.DB_HOST || '127.0.0.1',
     dialect: 'mysql',
+    seederStorage: 'json',
+    seederStoragePath: 'sequelizeData.json',
+    seederStorageTableName: 'sequelize_data',
     define: {
       underscored: true,
       timestamps: true,

@@ -5,6 +5,7 @@ import {
   Model,
   BelongsToMany,
   DataType,
+  BeforeDestroy,
 } from 'sequelize-typescript';
 import { Role } from '../../roles/models/role.model';
 import { RolePermission } from './rolePermission.model';
@@ -16,6 +17,7 @@ import {
   BelongsToManyRemoveAssociationsMixin,
   BelongsToManySetAssociationsMixin,
 } from 'sequelize/types/associations/belongs-to-many';
+import { DestroyOptions } from 'sequelize';
 
 @Table({
   tableName: 'permissions',
@@ -47,4 +49,17 @@ export class Permission extends Model<Permission> {
   public setRoles!: BelongsToManySetAssociationsMixin<Role, number>;
   public removeRole!: BelongsToManyRemoveAssociationMixin<Role, number>;
   public removeRoles!: BelongsToManyRemoveAssociationsMixin<Role, number>;
+
+  @BeforeDestroy
+  static async cleanRolePermissions(
+    permission: Permission,
+    options: DestroyOptions,
+  ) {
+    await RolePermission.destroy({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      where: { permissionId: permission.id },
+      force: true, // hard delete join table rows
+      transaction: options.transaction,
+    });
+  }
 }
