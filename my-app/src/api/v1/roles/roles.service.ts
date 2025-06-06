@@ -104,7 +104,7 @@ export class RolesService {
       this.sequelize,
       'users',
       reqUser.userId,
-      role.get('creatorId'),
+      role.get('creatorId') || 1,
     );
     if (!creatorParent) {
       throw new ForbiddenException('role.error.noViewPermission');
@@ -117,7 +117,7 @@ export class RolesService {
       id,
     );
     if (!reqUserAncestor) {
-      throw new ForbiddenException(`You don't have access to view this role`);
+      throw new ForbiddenException('role.error.hierarchyViolation');
     }
     return role;
   }
@@ -143,7 +143,7 @@ export class RolesService {
       this.sequelize,
       'users',
       reqUser.userId,
-      role.get('creatorId'),
+      role.get('creatorId') || 1,
     );
     if (!creatorParent) {
       throw new ForbiddenException('role.error.noModifyPermission');
@@ -208,7 +208,7 @@ export class RolesService {
       this.sequelize,
       'users',
       reqUser.userId,
-      role.get('creatorId'),
+      role.get('creatorId') || 1,
     );
     if (!creatorParent) {
       throw new ForbiddenException('role.error.notUserChild');

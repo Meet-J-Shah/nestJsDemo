@@ -1,5 +1,12 @@
 // src/user/user.model.ts
-import { Table, Column, Model, DataType } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  DataType,
+  ForeignKey,
+} from 'sequelize-typescript';
+import { User } from '../../users/models/user.model';
 
 @Table({
   timestamps: true, // enable createdAt and updatedAt
@@ -7,28 +14,12 @@ import { Table, Column, Model, DataType } from 'sequelize-typescript';
   underscored: true, // use snake_case column names
 })
 export class Book extends Model<Book> {
-  // @Column({
-  //   type: DataType.INTEGER,
-  //   autoIncrement: true,
-  //   primaryKey: true,
-  // })
-  // id: number;
-
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
   name: string;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  email: string;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  password: string;
+  @ForeignKey(() => User)
+  @Column({ type: DataType.INTEGER, allowNull: true })
+  authorId: number | null;
 }

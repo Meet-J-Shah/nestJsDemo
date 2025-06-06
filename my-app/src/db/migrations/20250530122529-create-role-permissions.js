@@ -10,7 +10,7 @@ module.exports = {
           model: 'roles',
           key: 'id',
         },
-        // onDelete: 'CASCADE',
+        onDelete: 'CASCADE',
       },
       permission_id: {
         type: Sequelize.INTEGER,
@@ -19,7 +19,7 @@ module.exports = {
           model: 'permissions',
           key: 'id',
         },
-        // onDelete: 'CASCADE',
+        onDelete: 'CASCADE',
       },
     });
   },

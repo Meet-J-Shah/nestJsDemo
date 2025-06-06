@@ -53,8 +53,7 @@ export class UsersService {
       reqUser.roleId,
       createUserDto.roleId,
     );
-
-    if (!userRole && reqUser.roleId == createUserDto.roleId) {
+    if (!userRole) {
       throw new ForbiddenException('user.error.hierarchyViolation');
     }
 
@@ -169,7 +168,7 @@ export class UsersService {
     // const userParent = await isAncestor(User, userId, id);
     const hierarchy = await getAncestryPath(this.sequelize, 'users', id);
     const idIndex = hierarchy.indexOf(id);
-    const parentIndex = hierarchy.indexOf(user.get('parentId'));
+    const parentIndex = hierarchy.indexOf(user.get('parentId') || -Infinity);
     const requestUserIdIndex = hierarchy.indexOf(reqUser.userId);
     const userParent = requestUserIdIndex < idIndex;
     const userParent2 = requestUserIdIndex < parentIndex;

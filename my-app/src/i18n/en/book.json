@@ -1,0 +1,12 @@
+{
+  "created": "Book created successfully",
+  "fetched": "Book with Requested Id fetched successfully",
+  "allFetched": "All Related Books fetched successfully",
+  "updated": "Book with Requested Id updated successfully",
+  "deleted": "Book with Requested Id deleted successfully",
+  "error.exists": "Book With This name Already Exist in The Db",
+  "error.notAuthorChange": "Only Super Admin can change author",
+  "error.notAuthorAdd": "Only Super Admin can Add author",
+  "error.notFound": "Requested Book not Found",
+  "error.notOwned": "You do not own this book"
+}

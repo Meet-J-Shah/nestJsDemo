@@ -4,5 +4,11 @@
   "messages": {
     "ITEMS_FETCHED": "Items fetched successfully",
     "USER_CREATED": "User created successfully"
+  },
+  "errors": {
+    "notAuthorized": "Not authorized",
+    "notAuthenticated": "User not authenticated",
+    "insufficientPermission": "User has Insufficient permissions",
+    "notSuperAdmin": "Only Super Admin can perform this action"
   }
 }

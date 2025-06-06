@@ -25,11 +25,6 @@ import { ResponseMessage } from 'src/common/decorators/responseMessage.decorator
 export class UserController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('profileV2')
-  getProfile(@Req() req: Request & { user: any }): any {
-    return req.user;
-  }
-
   @ResponseMessage('user.created')
   @Permissions('create_user')
   @Post()
